@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 
+import 'core/flac_core.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Go backend with app's documents directory
+  final appDir = await getApplicationDocumentsDirectory();
+  try {
+    await FlacCore.instance.init(appDir.path);
+  } catch (e) {
+    debugPrint('FlacCore init failed: $e');
+  }
+
   runApp(const ProviderScope(child: FlacApp()));
 }
 

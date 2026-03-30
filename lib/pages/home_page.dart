@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/exceptions.dart';
+import '../core/url_resolver.dart';
 import '../providers/core_provider.dart';
+import '../providers/shared_url_provider.dart';
+import '../widgets/cover_art_tile.dart';
+import '../widgets/skeleton_loader.dart';
+import '../widgets/track_list_tile.dart';
 
 /// Home page — paste a URL, fetch content, select tracks, download.
 class HomePage extends ConsumerStatefulWidget {
@@ -21,6 +27,20 @@ class _HomePageState extends ConsumerState<HomePage> {
   Set<int> _selectedTracks = {};
 
   @override
+  void initState() {
+    super.initState();
+    // Check for shared URL after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final sharedUrl = ref.read(sharedUrlProvider);
+      if (sharedUrl != null && sharedUrl.isNotEmpty) {
+        _urlController.text = sharedUrl;
+        ref.read(sharedUrlProvider.notifier).clear();
+        _fetchContent();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _urlController.dispose();
     super.dispose();
@@ -35,7 +55,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _fetchContent() async {
-    final url = _urlController.text.trim();
+    var url = _urlController.text.trim();
     if (url.isEmpty) return;
 
     setState(() {
@@ -46,6 +66,22 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     try {
+      // If not a Tidal/Qobuz URL, try resolving via Odesli
+      final lower = url.toLowerCase();
+      if (!lower.contains('tidal.com') && !lower.contains('qobuz.com')) {
+        final resolved = await URLResolver.resolve(url);
+        if (resolved != null) {
+          url = resolved.bestUrl;
+          _urlController.text = url;
+        } else {
+          setState(() {
+            _error = 'Could not resolve URL to Tidal/Qobuz';
+            _loading = false;
+          });
+          return;
+        }
+      }
+
       final core = ref.read(flacCoreProvider);
       final result = core.fetchContent(url);
       final content = result['result'] as Map<String, dynamic>?;
@@ -74,11 +110,11 @@ class _HomePageState extends ConsumerState<HomePage> {
   List<dynamic> _getTracks() {
     if (_content == null) return [];
     // Content can be a track, album, playlist, or artist
-    if (_content!.containsKey('Tracks')) {
-      return _content!['Tracks'] as List<dynamic>? ?? [];
+    if (_content!.containsKey('tracks')) {
+      return _content!['tracks'] as List<dynamic>? ?? [];
     }
     // Single track
-    if (_content!.containsKey('ID') && _content!.containsKey('Title')) {
+    if (_content!.containsKey('id') && _content!.containsKey('title')) {
       return [_content!];
     }
     return [];
@@ -94,7 +130,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     try {
       final core = ref.read(flacCoreProvider);
-      core.queueDownloads(selectedTracks, '');
+      core.queueDownloads(selectedTracks, core.downloadDir);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +138,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             content: Text('Queued ${selectedTracks.length} tracks'),
             action: SnackBarAction(
               label: 'View Queue',
-              onPressed: () => Navigator.of(context).pushNamed('/queue'),
+              onPressed: () => context.go('/queue'),
             ),
           ),
         );
@@ -149,7 +185,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: _loading ? null : _fetchContent,
+                  onPressed: _loading ? null : () {
+                    HapticFeedback.lightImpact();
+                    _fetchContent();
+                  },
                   child: _loading
                       ? const SizedBox(
                           width: 20,
@@ -182,12 +221,23 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
 
           // Content
-          if (_content != null) ...[
+          if (_loading)
+            const Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SkeletonLoader(layout: SkeletonLayout.detailHeader),
+                    SkeletonLoader(layout: SkeletonLayout.trackList),
+                  ],
+                ),
+              ),
+            )
+          else if (_content != null) ...[
             _buildContentHeader(),
             const Divider(),
             // Track list
             Expanded(child: _buildTrackList()),
-          ] else if (!_loading && _error == null)
+          ] else if (_error == null)
             const Expanded(
               child: Center(
                 child: Column(
@@ -205,7 +255,10 @@ class _HomePageState extends ConsumerState<HomePage> {
       // Download FAB
       floatingActionButton: _content != null && _selectedTracks.isNotEmpty
           ? FloatingActionButton.extended(
-              onPressed: _downloadSelected,
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _downloadSelected();
+              },
               icon: const Icon(Icons.download),
               label: Text('Download ${_selectedTracks.length}'),
             )
@@ -214,26 +267,20 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildContentHeader() {
-    final title = _content?['Title'] ?? _content?['Name'] ?? 'Unknown';
-    final artist = _content?['Artist'] ?? _content?['Creator'] ?? '';
+    final title = _content?['title'] ?? _content?['name'] ?? 'Unknown';
+    final artist = _content?['artist'] ?? _content?['creator'] ?? '';
     final tracks = _getTracks();
-    final coverUrl = _content?['CoverURL'] ?? '';
+    final coverUrl = _content?['coverUrl'] ?? _content?['coverURL'] ?? '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           // Cover art
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: coverUrl.isNotEmpty
-                ? Image.network(coverUrl, width: 80, height: 80, fit: BoxFit.cover)
-                : Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[800],
-                    child: const Icon(Icons.album, size: 40),
-                  ),
+          CoverArtTile(
+            imageUrl: coverUrl.isNotEmpty ? coverUrl : null,
+            size: 80,
+            borderRadius: 8,
           ),
           const SizedBox(width: 12),
           // Info
@@ -287,27 +334,17 @@ class _HomePageState extends ConsumerState<HomePage> {
       itemCount: tracks.length,
       itemBuilder: (context, index) {
         final track = tracks[index] as Map<String, dynamic>;
-        final title = track['Title'] ?? 'Unknown';
-        final artist = track['Artist'] ?? '';
-        final trackNum = track['TrackNumber'] ?? (index + 1);
-        final duration = track['Duration'] as int? ?? 0;
-        final minutes = duration ~/ 60;
-        final seconds = duration % 60;
+        final title = track['title'] ?? track['Title'] ?? 'Unknown';
+        final artist = track['artist'] ?? track['Artist'] ?? '';
+        final trackNum = track['trackNumber'] ?? track['TrackNumber'] ?? (index + 1);
+        final duration = ((track['duration'] ?? track['Duration'] ?? 0) as num).toInt();
         final selected = _selectedTracks.contains(index);
 
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: selected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.transparent,
-            foregroundColor: selected
-                ? Theme.of(context).colorScheme.onPrimary
-                : Theme.of(context).colorScheme.onSurface,
-            child: Text('$trackNum'),
-          ),
-          title: Text(title.toString(), maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text(artist.toString()),
-          trailing: Text('$minutes:${seconds.toString().padLeft(2, '0')}'),
+        return TrackListTile(
+          trackNumber: (trackNum as num).toInt(),
+          title: title.toString(),
+          artist: artist.toString(),
+          duration: duration,
           selected: selected,
           onTap: () {
             setState(() {
@@ -322,4 +359,5 @@ class _HomePageState extends ConsumerState<HomePage> {
       },
     );
   }
+
 }

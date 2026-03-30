@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Dev/plan files
+task_plan*.md
+findings*.md
+progress*.md
+
+*.plan
+
+# Build artifacts (Go .so handled separately)
+*.png
+flutter_*.png

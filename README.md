@@ -1,50 +1,116 @@
-# FLACidal Mobile
+<div align="center">
 
-Cross-platform mobile app for downloading lossless FLAC music from Tidal.
-Built with Flutter + Go FFI.
+<img src="assets/icon.png" alt="FLACidal Mobile" width="120">
+
+### FLACidal Mobile
+
+**Download lossless FLAC music from Tidal & Qobuz on your phone**
+
+[![GitHub Release](https://img.shields.io/github/v/release/kushiemoon-dev/flacidal-mobile?style=flat-square&color=e5a00d)](https://github.com/kushiemoon-dev/flacidal-mobile/releases/latest)
+[![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-3.41+-02569B?style=flat-square&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
+
+![Android](https://img.shields.io/badge/Android-5.0+-3DDC84?style=flat-square&logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-16+-000000?style=flat-square&logo=apple&logoColor=white)
+
+</div>
+
+---
+
+## Overview
+
+**FLACidal Mobile** is the mobile companion to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal). Paste a Tidal URL, select tracks, and download Hi-Res or Lossless FLAC files directly to your phone — no account required.
+
+Built with Flutter for the UI and a shared Go backend via FFI for all download logic.
+
+---
 
 ## Features
 
-- Paste Tidal URLs (album, playlist, track) to download FLAC
-- URL resolution: paste Spotify/Apple Music URLs -> auto-resolve to Tidal
-- Real-time download queue with pause/resume
-- Search Tidal (tracks, albums, artists)
-- Library browser with metadata viewer
-- Lyrics (fetch + embed in FLAC)
-- Format conversion (MP3, AAC, Opus)
-- Extension system for additional music sources
-- Qobuz support
-- Material 3 dark/light theme with 16 accent colors
-- Share intent handler (share URLs from browser -> auto-download)
-- Downloads to public Music folder
+- **Hi-Res & Lossless** — 24-bit up to 192 kHz from Tidal and Qobuz
+- **Paste & Download** — Paste any Tidal URL (album, playlist, track, artist)
+- **URL Resolution** — Paste links from other platforms, auto-resolve to Tidal via Odesli
+- **Search** — Browse Tidal tracks, albums, and artists with tabbed results
+- **Real-time Queue** — Download progress with speed, ETA, and per-track percentage
+- **Background Downloads** — Foreground service keeps downloads running when the app is closed
+- **Library** — Grid/list view of downloaded files with cover art and metadata
+- **Lyrics** — Fetch synced and plain lyrics, embed directly in FLAC files
+- **Format Conversion** — Convert FLAC to MP3, AAC, or Opus
+- **Extension System** — Install community extensions for additional music sources
+- **Custom Theme** — Dark theme matching the desktop app, Outfit font, accent colors
+- **Share Intent** — Share a Tidal link from your browser to start downloading instantly
 
-## Requirements
+---
 
-- Android 5.0+ (arm64, arm, x86_64)
-- iOS 16+ (arm64) -- requires sideloading via AltStore
+## Download
 
-## Build
+**[Download Latest APK](https://github.com/kushiemoon-dev/flacidal-mobile/releases/latest)**
 
-### Prerequisites
-- Flutter 3.41+
-- Go 1.23+
-- Android NDK r29 (for Go cross-compilation)
+| Platform | File | Install |
+|----------|------|---------|
+| Android | `FLACidal.apk` | Direct install |
+| iOS | `FLACidal.ipa` | Via [AltStore](https://altstore.io) or [SideStore](https://sidestore.io) |
 
-### Android
+**iOS AltStore source:** `https://kushiemoon-dev.github.io/flacidal-mobile/altstore/apps.json`
+
+---
+
+## Usage
+
+1. Open **FLACidal Mobile**
+2. Paste a Tidal URL (or share one from your browser)
+3. Select tracks and tap **Download**
+4. Files are saved to `Music/FLACidal/` on your device
+
+### Supported Content
+
+| Source | Types |
+|--------|-------|
+| **Tidal** | Album · Playlist · Track · Mix · Artist |
+| **Qobuz** | Album · Playlist · Track |
+| **Other** | Any music URL (resolved via Odesli) |
+
+---
+
+## Architecture
+
+```
+flacidal-mobile/         Flutter app
+├── lib/
+│   ├── core/            FFI bridge + URL resolver
+│   ├── pages/           12 screens
+│   ├── widgets/         8 reusable components
+│   ├── providers/       Riverpod state management
+│   ├── theme/           Custom dark theme
+│   └── router/          GoRouter navigation
+│
+flacidal-core/           Shared Go backend (compiled as .so/.a)
+```
+
+The Go backend handles all networking, downloads, metadata, and storage. Flutter handles the UI. Communication is via JSON-RPC over FFI.
+
+---
+
+## Build from Source
+
+**Requirements:** Flutter 3.41+, Go 1.23+, Android NDK r29
+
 ```bash
-# Build Go shared libraries
-cd ../flacidal-core
-make android-arm64 android-arm android-x86_64
+# 1. Build Go shared libraries
+cd flacidal-core
+make android-arm64
 make install-android
 
-# Build Flutter APK
+# 2. Build Flutter APK
 cd ../flacidal-mobile
 flutter build apk --release
 ```
 
 ### iOS (requires macOS + Xcode)
+
 ```bash
-cd ../flacidal-core
+cd flacidal-core
 make ios
 make install-ios
 
@@ -52,17 +118,47 @@ cd ../flacidal-mobile
 flutter build ipa --no-codesign
 ```
 
-## Distribution
+---
 
-- **Android**: APK from [GitHub Releases](../../releases)
-- **iOS**: IPA via AltStore -- add this source URL: `https://kushiemoon-dev.github.io/flacidal-mobile/altstore/apps.json`
+## Configuration
 
-## Architecture
+| Setting | Default | Options |
+|---------|---------|---------|
+| Quality | `LOSSLESS` | `HI_RES_MAX` · `HI_RES_LOSSLESS` · `LOSSLESS` · `HIGH` |
+| Format | `FLAC` | `FLAC` · `M4A` · `ALAC` |
+| Folder structure | Flat | By Artist/Album · By Playlist · Flat |
+| Theme | Dark | Dark · Light · System |
+| Accent color | Pink | 12 presets |
+| Font | Outfit | 16 options |
 
-- `flacidal-core/` -- Shared Go module (Tidal API, downloader, metadata, extensions)
-- `flacidal-mobile/` -- Flutter app with Go FFI bindings
-- `flacidal-desktop/` -- Desktop app (Wails + Svelte)
+---
 
-## License
+## FAQ
 
-Private
+**Do I need a Tidal account?**
+No. FLACidal handles authentication internally.
+
+**Where are files saved?**
+`/storage/emulated/0/Music/FLACidal/` on Android. Configurable in Settings.
+
+**Can I install on iOS without a Mac?**
+You need AltStore or SideStore on your iPhone, which requires initial setup with a computer.
+
+**Does it work in the background?**
+Yes. A foreground service keeps downloads running when the app is minimized.
+
+---
+
+## Disclaimer
+
+FLACidal Mobile is intended for **educational and personal use only**. It is not affiliated with, endorsed by, or connected to Tidal, Qobuz, or any other streaming service. You are solely responsible for ensuring your use complies with local laws and the Terms of Service of the platforms involved. The software is provided "as is" without warranty of any kind.
+
+---
+
+<div align="center">
+
+**MIT License** · [Desktop App](https://github.com/kushiemoon-dev/FLACidal) · [Releases](https://github.com/kushiemoon-dev/flacidal-mobile/releases)
+
+Made with ♥ by [KushieMoon](https://github.com/kushiemoon-dev)
+
+</div>

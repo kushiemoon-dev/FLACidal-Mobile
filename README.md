@@ -1,17 +1,68 @@
-# flacidal_mobile
+# FLACidal Mobile
 
-A new Flutter project.
+Cross-platform mobile app for downloading lossless FLAC music from Tidal.
+Built with Flutter + Go FFI.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Paste Tidal URLs (album, playlist, track) to download FLAC
+- URL resolution: paste Spotify/Apple Music URLs -> auto-resolve to Tidal
+- Real-time download queue with pause/resume
+- Search Tidal (tracks, albums, artists)
+- Library browser with metadata viewer
+- Lyrics (fetch + embed in FLAC)
+- Format conversion (MP3, AAC, Opus)
+- Extension system for additional music sources
+- Qobuz support
+- Material 3 dark/light theme with 16 accent colors
+- Share intent handler (share URLs from browser -> auto-download)
+- Downloads to public Music folder
 
-A few resources to get you started if this is your first Flutter project:
+## Requirements
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Android 5.0+ (arm64, arm, x86_64)
+- iOS 16+ (arm64) -- requires sideloading via AltStore
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Build
+
+### Prerequisites
+- Flutter 3.41+
+- Go 1.23+
+- Android NDK r29 (for Go cross-compilation)
+
+### Android
+```bash
+# Build Go shared libraries
+cd ../flacidal-core
+make android-arm64 android-arm android-x86_64
+make install-android
+
+# Build Flutter APK
+cd ../flacidal-mobile
+flutter build apk --release
+```
+
+### iOS (requires macOS + Xcode)
+```bash
+cd ../flacidal-core
+make ios
+make install-ios
+
+cd ../flacidal-mobile
+flutter build ipa --no-codesign
+```
+
+## Distribution
+
+- **Android**: APK from [GitHub Releases](../../releases)
+- **iOS**: IPA via AltStore -- add this source URL: `https://kushiemoon-dev.github.io/flacidal-mobile/altstore/apps.json`
+
+## Architecture
+
+- `flacidal-core/` -- Shared Go module (Tidal API, downloader, metadata, extensions)
+- `flacidal-mobile/` -- Flutter app with Go FFI bindings
+- `flacidal-desktop/` -- Desktop app (Wails + Svelte)
+
+## License
+
+Private

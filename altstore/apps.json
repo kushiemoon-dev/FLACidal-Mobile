@@ -1,0 +1,23 @@
+{
+  "name": "FLACidal",
+  "identifier": "dev.kushiemoon.flacidal-mobile",
+  "apps": [
+    {
+      "name": "FLACidal",
+      "bundleIdentifier": "dev.kushiemoon.flacidal-mobile",
+      "developerName": "kushiemoon",
+      "subtitle": "Lossless FLAC downloader",
+      "localizedDescription": "Download lossless FLAC music from Tidal. Built with Flutter + Go FFI.",
+      "iconURL": "https://github.com/kushiemoon-dev/flacidal-mobile/raw/main/altstore/icon.png",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "date": "2026-03-30",
+          "downloadURL": "https://github.com/kushiemoon-dev/flacidal-mobile/releases/download/v0.1.0/FLACidal.ipa",
+          "size": 50000000,
+          "minOSVersion": "16.0"
+        }
+      ]
+    }
+  ]
+}

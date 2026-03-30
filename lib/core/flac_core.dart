@@ -14,6 +14,8 @@ class FlacCore {
 
   late final FlacFFI _ffi;
   bool _initialized = false;
+  String _dataDir = '';
+  String _downloadDir = '';
 
   final _eventController = StreamController<Map<String, dynamic>>.broadcast();
   final _pendingRPCs = <int, Completer<Map<String, dynamic>>>{};
@@ -31,6 +33,9 @@ class FlacCore {
       _eventController.stream.where((e) => e['type'] == 'download-progress');
 
   bool get isInitialized => _initialized;
+  String get dataDir => _dataDir;
+  String get downloadDir => _downloadDir;
+  set downloadDir(String dir) => _downloadDir = dir;
 
   /// Initialize the core with the given data directory.
   Future<void> init(String dataDir) async {
@@ -61,6 +66,7 @@ class FlacCore {
       );
     }
 
+    _dataDir = dataDir;
     _initialized = true;
   }
 
@@ -130,6 +136,23 @@ class FlacCore {
   Map<String, dynamic> queueDownloads(
           List<Map<String, dynamic>> tracks, String outputDir) =>
       callSync('queueDownloads', {'tracks': tracks, 'outputDir': outputDir});
+
+  Map<String, dynamic> queueSingleWithQuality({
+    required int trackId,
+    required String outputDir,
+    required String title,
+    required String artist,
+    String isrc = '',
+    required String quality,
+  }) =>
+      callSync('queueSingleWithQuality', {
+        'trackId': trackId,
+        'outputDir': outputDir,
+        'title': title,
+        'artist': artist,
+        'isrc': isrc,
+        'quality': quality,
+      });
 
   Map<String, dynamic> getQueueStatus() => callSync('getQueueStatus');
 

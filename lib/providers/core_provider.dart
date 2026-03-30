@@ -18,3 +18,17 @@ final downloadEventsProvider = StreamProvider<Map<String, dynamic>>((ref) {
   final core = ref.watch(flacCoreProvider);
   return core.downloadEvents;
 });
+
+/// Download directory — synced with FlacCore.downloadDir.
+final downloadDirProvider =
+    NotifierProvider<DownloadDirNotifier, String>(DownloadDirNotifier.new);
+
+class DownloadDirNotifier extends Notifier<String> {
+  @override
+  String build() => ref.read(flacCoreProvider).downloadDir;
+
+  void set(String path) {
+    ref.read(flacCoreProvider).downloadDir = path;
+    state = path;
+  }
+}

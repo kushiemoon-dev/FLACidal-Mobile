@@ -1,0 +1,80 @@
+name: Android Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout flacidal-mobile
+        uses: actions/checkout@v4
+        with:
+          path: flacidal-mobile
+
+      - name: Checkout flacidal-core
+        uses: actions/checkout@v4
+        with:
+          repository: kushiemoon-dev/flacidal-core
+          path: flacidal-core
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Android NDK r29
+        uses: android-actions/setup-android@v3
+      - run: sdkmanager "ndk;29.0.14206865"
+
+      - name: Cross-compile Go for Android (arm64, arm, x86_64)
+        working-directory: flacidal-core
+        env:
+          ANDROID_NDK: ${{ runner.tool_cache }}/android-sdk/ndk/29.0.14206865
+        run: |
+          make android-arm64
+          make android-arm
+          make android-x86_64
+
+      - name: Copy .so files into jniLibs
+        run: |
+          JNILIBS=flacidal-mobile/android/app/src/main/jniLibs
+          mkdir -p $JNILIBS/arm64-v8a $JNILIBS/armeabi-v7a $JNILIBS/x86_64
+          cp flacidal-core/build/android/arm64-v8a/libflacidal.so $JNILIBS/arm64-v8a/
+          cp flacidal-core/build/android/armeabi-v7a/libflacidal.so $JNILIBS/armeabi-v7a/
+          cp flacidal-core/build/android/x86_64/libflacidal.so $JNILIBS/x86_64/
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.x'
+          channel: stable
+
+      - name: Install Flutter dependencies
+        working-directory: flacidal-mobile
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: flacidal-mobile
+        run: flutter build apk --release
+
+      - name: Rename APK
+        working-directory: flacidal-mobile
+        run: mv build/app/outputs/flutter-apk/app-release.apk FLACidal.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FLACidal-Android
+          path: flacidal-mobile/FLACidal.apk
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: flacidal-mobile/FLACidal.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

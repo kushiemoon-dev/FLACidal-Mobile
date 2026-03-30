@@ -155,6 +155,16 @@ Yes. A foreground service keeps downloads running when the app is minimized.
 
 ---
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=kushiemoon-dev/FLACidal-Mobile&type=Date)](https://star-history.com/#kushiemoon-dev/FLACidal-Mobile&Date)
+
+### FLACidal Ecosystem
+
+[![Star History Chart](https://api.star-history.com/svg?repos=kushiemoon-dev/FLACidal,kushiemoon-dev/flacidal-core,kushiemoon-dev/FLACidal-Mobile&type=Date)](https://star-history.com/#kushiemoon-dev/FLACidal&kushiemoon-dev/flacidal-core&kushiemoon-dev/FLACidal-Mobile&Date)
+
+---
+
 ## Disclaimer
 
 FLACidal Mobile is intended for **educational and personal use only**. It is not affiliated with, endorsed by, or connected to Tidal, Qobuz, or any other streaming service. You are solely responsible for ensuring your use complies with local laws and the Terms of Service of the platforms involved. The software is provided "as is" without warranty of any kind.

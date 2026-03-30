@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" alt="FLACidal Mobile" width="120">
+<img src="banner.png" alt="FLACidal" width="600">
 
 ### FLACidal Mobile
 

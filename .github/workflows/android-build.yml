@@ -44,13 +44,19 @@ jobs:
           go-version: '1.24'
 
       - name: Setup Android NDK
-        uses: android-actions/setup-android@v3
-      - run: sdkmanager "ndk;29.0.14206865"
+        run: |
+          yes | sdkmanager "ndk;29.0.14206865" --sdk_root=$ANDROID_HOME || true
+          # Find the actual NDK path
+          NDK_PATH=$(find $ANDROID_HOME/ndk -maxdepth 1 -type d -name "29*" | head -1)
+          if [ -z "$NDK_PATH" ]; then
+            NDK_PATH="$ANDROID_HOME/ndk/29.0.14206865"
+          fi
+          echo "ANDROID_NDK=$NDK_PATH" >> $GITHUB_ENV
+          echo "Found NDK at: $NDK_PATH"
+          ls "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/" | grep "aarch64.*clang$" | head -3
 
       - name: Cross-compile Go for Android
         working-directory: flacidal-core
-        env:
-          ANDROID_NDK: ${{ runner.tool_cache }}/android-sdk/ndk/29.0.14206865
         run: |
           make android-arm64
           make android-arm

@@ -23,7 +23,12 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: dart analyze lib/
+        run: |
+          dart analyze lib/ 2>&1 | tee /tmp/analyze.txt
+          if grep -q " error " /tmp/analyze.txt; then
+            echo "Errors found!"
+            exit 1
+          fi
 
       - name: Test
         run: flutter test || echo "No tests found, skipping"

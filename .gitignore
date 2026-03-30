@@ -51,6 +51,5 @@ progress*.md
 
 *.plan
 
-# Build artifacts (Go .so handled separately)
-*.png
+# Dev screenshots
 flutter_*.png

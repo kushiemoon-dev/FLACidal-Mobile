@@ -18,6 +18,12 @@
 
 ---
 
+<div align="center">
+<img src="screenshot.jpg" alt="FLACidal Mobile Screenshot" width="300">
+</div>
+
+---
+
 ## Overview
 
 **FLACidal Mobile** is the mobile companion to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal). Paste a Tidal URL, select tracks, and download Hi-Res or Lossless FLAC files directly to your phone — no account required.

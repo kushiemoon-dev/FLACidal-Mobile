@@ -1,9 +1,11 @@
 name: iOS Build
 
+# Disabled — no iOS signing contributor yet. See README.
+# Uncomment triggers below when an iOS contributor joins.
 on:
-  push:
-    tags:
-      - 'v*'
+  # push:
+  #   tags:
+  #     - 'v*'
   workflow_dispatch:
 
 jobs:

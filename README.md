@@ -12,7 +12,7 @@
 [![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 
 ![Android](https://img.shields.io/badge/Android-5.0+-3DDC84?style=flat-square&logo=android&logoColor=white)
-![iOS](https://img.shields.io/badge/iOS-16+-000000?style=flat-square&logo=apple&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-planned-555555?style=flat-square&logo=apple&logoColor=white)
 
 </div>
 
@@ -56,9 +56,8 @@ Built with Flutter for the UI and a shared Go backend via FFI for all download l
 | Platform | File | Install |
 |----------|------|---------|
 | Android | `FLACidal.apk` | Direct install |
-| iOS | `FLACidal.ipa` | Via [AltStore](https://altstore.io) or [SideStore](https://sidestore.io) |
 
-**iOS AltStore source:** `https://kushiemoon-dev.github.io/flacidal-mobile/altstore/apps.json`
+> **iOS:** The codebase supports iOS but there is currently no contributor with an Apple Developer account to handle code signing and IPA distribution. If you'd like to help, see [Contributing](#contributing).
 
 ---
 
@@ -147,11 +146,20 @@ No. FLACidal handles authentication internally.
 **Where are files saved?**
 `/storage/emulated/0/Music/FLACidal/` on Android. Configurable in Settings.
 
-**Can I install on iOS without a Mac?**
-You need AltStore or SideStore on your iPhone, which requires initial setup with a computer.
+**Is iOS supported?**
+The codebase compiles for iOS but we don't have a contributor to handle Apple signing yet. You can build locally with `flutter build ipa --no-codesign` and sideload via AltStore/SideStore. Contributors welcome!
 
 **Does it work in the background?**
 Yes. A foreground service keeps downloads running when the app is minimized.
+
+---
+
+## Contributing
+
+Contributions are welcome! Areas where help is especially needed:
+
+- **iOS build & signing** — We need a contributor with an Apple Developer account to set up code signing, TestFlight distribution, and the AltStore source. The Flutter + Go FFI codebase already compiles for iOS.
+- **Bug reports** — Open an issue with steps to reproduce.
 
 ---
 

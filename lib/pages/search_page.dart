@@ -75,26 +75,32 @@ class _SearchPageState extends ConsumerState<SearchPage>
       List<dynamic> artists = [];
 
       if (searchTidal) {
-        final trackResult = core.callSync('searchTidal', params);
-        tracks = trackResult['result'] as List<dynamic>? ?? [];
-        if (!_songsOnly) {
-          final albumResult = core.callSync('searchTidalAlbums', params);
-          final artistResult = core.callSync('searchTidalArtists', params);
-          albums = albumResult['result'] as List<dynamic>? ?? [];
-          artists = artistResult['result'] as List<dynamic>? ?? [];
+        final futures = <Future<Map<String, dynamic>>>[
+          core.callAsync('searchTidal', params),
+          if (!_songsOnly) core.callAsync('searchTidalAlbums', params),
+          if (!_songsOnly) core.callAsync('searchTidalArtists', params),
+        ];
+        final results = await Future.wait(futures);
+        tracks = results[0]['result'] as List<dynamic>? ?? [];
+        if (!_songsOnly && results.length > 2) {
+          albums = results[1]['result'] as List<dynamic>? ?? [];
+          artists = results[2]['result'] as List<dynamic>? ?? [];
         }
       }
 
       if (searchQobuz) {
         try {
-          final qobuzResult = core.callSync('searchQobuz', params);
-          final qobuzTracks = qobuzResult['result'] as List<dynamic>? ?? [];
+          final futures = <Future<Map<String, dynamic>>>[
+            core.callAsync('searchQobuz', params),
+            if (!_songsOnly) core.callAsync('searchQobuzAlbums', params),
+            if (!_songsOnly) core.callAsync('searchQobuzArtists', params),
+          ];
+          final results = await Future.wait(futures);
+          final qobuzTracks = results[0]['result'] as List<dynamic>? ?? [];
           tracks = [...tracks, ...qobuzTracks];
-          if (!_songsOnly) {
-            final qobuzAlbums = core.callSync('searchQobuzAlbums', params);
-            final qobuzArtists = core.callSync('searchQobuzArtists', params);
-            albums = [...albums, ...(qobuzAlbums['result'] as List<dynamic>? ?? [])];
-            artists = [...artists, ...(qobuzArtists['result'] as List<dynamic>? ?? [])];
+          if (!_songsOnly && results.length > 2) {
+            albums = [...albums, ...(results[1]['result'] as List<dynamic>? ?? [])];
+            artists = [...artists, ...(results[2]['result'] as List<dynamic>? ?? [])];
           }
         } on FlacCoreException {
           // Qobuz not configured — silently skip if searching "all"

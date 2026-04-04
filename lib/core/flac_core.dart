@@ -175,6 +175,8 @@ class FlacCore {
 
   static void _onEvent(Pointer<Char> jsonPtr) {
     final jsonStr = jsonPtr.cast<Utf8>().toDartString();
+    // Free native memory after copying — same allocator as C.CString (malloc).
+    FlacCore.instance._ffi.flacFree(jsonPtr);
 
     try {
       final event = jsonDecode(jsonStr) as Map<String, dynamic>;

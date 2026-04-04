@@ -35,7 +35,7 @@ class SettingsPage extends ConsumerWidget {
     ('Artist + Singles', '{artist}/{album|Singles}'),
   ];
 
-  static const _qualities = ['HI_RES_MAX', 'HI_RES_LOSSLESS', 'LOSSLESS', 'HIGH'];
+  static const _qualities = ['HI_RES', 'LOSSLESS', 'HIGH'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

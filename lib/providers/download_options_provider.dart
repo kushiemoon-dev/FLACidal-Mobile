@@ -20,7 +20,7 @@ class DownloadOptionsNotifier extends Notifier<Map<String, dynamic>> {
   }
 
   static const _defaults = {
-    'Quality': 'LOSSLESS',
+    'Quality': 'HI_RES',
     'OrganizeFolders': false,
     'EmbedCover': true,
   };

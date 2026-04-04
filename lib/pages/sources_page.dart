@@ -47,6 +47,12 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
       final prefResult = core.callSync('getPreferredSource');
       _preferredSource = prefResult['source'] as String? ?? '';
       _fallbackEnabled = prefResult['fallback'] as bool? ?? false;
+
+      // Pre-populate Qobuz credentials from config
+      final configResult = core.callSync('getConfig');
+      _appIdController.text = configResult['qobuzAppId'] as String? ?? '';
+      _appSecretController.text = configResult['qobuzAppSecret'] as String? ?? '';
+      _authTokenController.text = configResult['qobuzAuthToken'] as String? ?? '';
     } catch (e) {
       _showError('Failed to load sources: $e');
     }

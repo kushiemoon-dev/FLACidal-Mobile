@@ -130,7 +130,15 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     try {
       final core = ref.read(flacCoreProvider);
-      core.queueDownloads(selectedTracks, core.downloadDir);
+      final source = _content?['source'] as String? ?? 'tidal';
+      if (source == 'qobuz') {
+        core.callSync('queueQobuzDownloads', {
+          'tracks': selectedTracks,
+          'outputDir': core.downloadDir,
+        });
+      } else {
+        core.queueDownloads(selectedTracks, core.downloadDir);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

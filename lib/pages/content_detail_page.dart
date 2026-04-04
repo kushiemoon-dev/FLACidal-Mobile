@@ -94,7 +94,15 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
     if (tracks.isEmpty || _selected.isEmpty) return;
     final selected = _selected.map((i) => tracks[i] as Map<String, dynamic>).toList();
     final core = ref.read(flacCoreProvider);
-    core.queueDownloads(selected, core.downloadDir);
+    final source = _content?['source'] as String? ?? 'tidal';
+    if (source == 'qobuz') {
+      core.callSync('queueQobuzDownloads', {
+        'tracks': selected,
+        'outputDir': core.downloadDir,
+      });
+    } else {
+      core.queueDownloads(selected, core.downloadDir);
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Queued ${selected.length} tracks')),
     );

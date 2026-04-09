@@ -37,13 +37,20 @@ Built with Flutter for the UI and a shared Go backend via FFI for all download l
 - **Hi-Res & Lossless** — 24-bit up to 192 kHz from Tidal and Qobuz
 - **Paste & Download** — Paste any Tidal URL (album, playlist, track, artist)
 - **URL Resolution** — Paste links from other platforms, auto-resolve to Tidal via Odesli
-- **Search** — Browse Tidal tracks, albums, and artists with tabbed results
+- **Search** — Browse Tidal and Qobuz with provider switcher and result sorting
 - **Real-time Queue** — Download progress with speed, ETA, and per-track percentage
 - **Background Downloads** — Foreground service keeps downloads running when the app is closed
-- **Library** — Grid/list view of downloaded files with cover art and metadata
-- **Lyrics** — Fetch synced and plain lyrics, embed directly in FLAC files
-- **Format Conversion** — Convert FLAC to MP3, AAC, or Opus
+- **Library** — Album grouping with disc numbers, advanced filters (source, quality, format), "Already in Library" detection
+- **Metadata Editing** — Edit all metadata fields directly from the app (title, artist, album, composer, genre, ISRC, and more)
+- **Cover Art** — Extract and save embedded cover art as standalone .jpg
+- **Lyrics** — Fetch synced and plain lyrics, embed in FLAC, or save as .lrc files
+- **Re-enrich** — Re-fetch and re-embed metadata without re-downloading audio files
+- **Format Conversion** — Convert FLAC to MP3, AAC, or Opus with full metadata preservation
+- **MP3 Tagging** — Full ID3v2 metadata embedding for MP3 files (cover art, lyrics, composer)
+- **Artist Tag Modes** — Joined or split Vorbis ARTIST tags for multi-artist tracks
+- **Singles/Albums Folders** — Automatic folder separation for singles vs albums
 - **Extension System** — Install community extensions for additional music sources
+- **Audio Analysis** — Detect upscaled files with spectrum analysis and confidence scoring
 - **Custom Theme** — Dark theme matching the desktop app, Outfit font, accent colors
 - **Share Intent** — Share a Tidal link from your browser to start downloading instantly
 
@@ -84,7 +91,7 @@ Built with Flutter for the UI and a shared Go backend via FFI for all download l
 flacidal-mobile/         Flutter app
 ├── lib/
 │   ├── core/            FFI bridge + URL resolver
-│   ├── pages/           12 screens
+│   ├── pages/           14 screens
 │   ├── widgets/         8 reusable components
 │   ├── providers/       Riverpod state management
 │   ├── theme/           Custom dark theme
@@ -131,7 +138,8 @@ flutter build ipa --no-codesign
 |---------|---------|---------|
 | Quality | `LOSSLESS` | `HI_RES_MAX` · `HI_RES_LOSSLESS` · `LOSSLESS` · `HIGH` |
 | Format | `FLAC` | `FLAC` · `M4A` · `ALAC` |
-| Folder structure | Flat | By Artist/Album · By Playlist · Flat |
+| Folder structure | Flat | By Artist/Album · By Playlist · Flat · Singles/Albums |
+| Artist tag mode | Joined | `joined` (single field) · `split` (multi-value Vorbis) |
 | Theme | Dark | Dark · Light · System |
 | Accent color | Pink | 12 presets |
 | Font | Outfit | 16 options |

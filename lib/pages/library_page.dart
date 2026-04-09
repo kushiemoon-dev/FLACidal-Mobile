@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/audio_provider.dart';
 import '../providers/core_provider.dart';
 import 'edit_metadata_page.dart';
 import 'local_album_page.dart';
@@ -169,6 +170,14 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       _reEnrichMetadata(path.toString());
                     },
                   ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.swap_horiz, size: 18),
+                    label: const Text('Convert'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showConvertDialog(path.toString());
+                    },
+                  ),
                 ],
               ),
             ],
@@ -239,6 +248,92 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showConvertDialog(String filePath) async {
+    String format = 'mp3';
+    int bitrate = 320;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Convert'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Output format'),
+              const SizedBox(height: 8),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'mp3', label: Text('MP3')),
+                  ButtonSegment(value: 'aac', label: Text('AAC')),
+                  ButtonSegment(value: 'opus', label: Text('Opus')),
+                ],
+                selected: {format},
+                onSelectionChanged: (v) =>
+                    setDialogState(() => format = v.first),
+              ),
+              const SizedBox(height: 16),
+              Text('Bitrate: ${bitrate}k'),
+              Slider(
+                value: bitrate.toDouble(),
+                min: 128,
+                max: 320,
+                divisions: 4,
+                label: '${bitrate}k',
+                onChanged: (v) =>
+                    setDialogState(() => bitrate = v.round()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Convert'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      _convertFile(filePath, format, bitrate);
+    }
+  }
+
+  Future<void> _convertFile(String path, String format, int bitrate) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Converting...')),
+    );
+    try {
+      final core = ref.read(flacCoreProvider);
+      core.callSync('convertFiles', {
+        'files': [path],
+        'options': {
+          'format': format,
+          'bitrate': bitrate,
+          'deleteSource': false,
+        },
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Conversion complete')),
+        );
+        _loadFiles();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Conversion error: $e')),
         );
       }
     }
@@ -537,30 +632,68 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   Widget _buildListView(List<Map<String, dynamic>> flacFiles) {
+    final audioState = ref.watch(audioProvider);
+
     return ListView.builder(
       itemCount: flacFiles.length,
       itemBuilder: (context, index) {
         final file = flacFiles[index];
         final name = file['name'] ?? file['Name'] ?? 'Unknown';
         final size = (file['size'] ?? file['Size'] ?? 0) as int;
+        final path = (file['path'] ?? file['Path'] ?? '').toString();
         final displayName = name.toString().replaceAll('.flac', '');
+        final isPlaying =
+            audioState.isPlaying && audioState.currentFile == path;
 
         return ListTile(
           leading: _buildCoverArt(file, size: 40),
           title: Text(displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(_formatSize(size)),
-          trailing: PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'metadata':
-                  _showMetadata(file);
-                case 'delete':
-                  _deleteFile(file);
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'metadata', child: Text('Metadata')),
-              PopupMenuItem(value: 'delete', child: Text('Delete')),
+          tileColor: isPlaying
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
+              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (path.isNotEmpty)
+                IconButton(
+                  icon: Icon(
+                    isPlaying
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_filled,
+                    size: 28,
+                    color: isPlaying
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
+                  ),
+                  onPressed: () {
+                    final notifier = ref.read(audioProvider.notifier);
+                    if (isPlaying) {
+                      notifier.pause();
+                    } else {
+                      notifier.play(path);
+                    }
+                  },
+                  visualDensity: VisualDensity.compact,
+                  tooltip: isPlaying ? 'Pause' : 'Play',
+                ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  switch (value) {
+                    case 'metadata':
+                      _showMetadata(file);
+                    case 'delete':
+                      _deleteFile(file);
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'metadata', child: Text('Metadata')),
+                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              ),
             ],
           ),
         );

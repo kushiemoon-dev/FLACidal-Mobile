@@ -168,6 +168,13 @@ class _HomePageState extends ConsumerState<HomePage> {
       appBar: AppBar(
         title: const Text('FLACidal'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Import CSV',
+            onPressed: () => context.push('/csv-import'),
+          ),
+        ],
       ),
       body: Column(
         children: [

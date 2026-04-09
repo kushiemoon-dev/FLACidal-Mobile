@@ -14,6 +14,15 @@ class TrackListTile extends StatelessWidget {
   final void Function(String quality)? onQualityDownload;
   final String? coverUrl;
 
+  /// Local file path — when set, shows a play/pause button.
+  final String? localFilePath;
+
+  /// Whether this track is currently playing.
+  final bool isPlaying;
+
+  /// Callback when play/pause is tapped.
+  final VoidCallback? onPlayPause;
+
   static const qualities = ['HI_RES_MAX', 'HI_RES_LOSSLESS', 'LOSSLESS', 'HIGH'];
 
   const TrackListTile({
@@ -28,6 +37,9 @@ class TrackListTile extends StatelessWidget {
     this.onLongPress,
     this.onQualityDownload,
     this.coverUrl,
+    this.localFilePath,
+    this.isPlaying = false,
+    this.onPlayPause,
   });
 
   @override
@@ -36,7 +48,11 @@ class TrackListTile extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     return Material(
-      color: selected ? cs.primary.withValues(alpha: 0.08) : Colors.transparent,
+      color: isPlaying
+          ? cs.primary.withValues(alpha: 0.12)
+          : selected
+              ? cs.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -92,6 +108,26 @@ class TrackListTile extends StatelessWidget {
                     color: cs.onSurface.withValues(alpha: 0.5),
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
+                ),
+              ],
+              // Play/Pause button (only for local files)
+              if (localFilePath != null && onPlayPause != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: Icon(
+                    isPlaying
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_filled,
+                    color: isPlaying ? cs.primary : cs.onSurface.withValues(alpha: 0.6),
+                    size: 28,
+                  ),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    onPlayPause!.call();
+                  },
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 20,
+                  tooltip: isPlaying ? 'Pause' : 'Play',
                 ),
               ],
               // Download button

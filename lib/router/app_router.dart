@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../pages/content_detail_page.dart';
 import '../pages/conversion_page.dart';
+import '../pages/csv_import_page.dart';
 import '../pages/extensions_page.dart';
 import '../pages/history_page.dart';
 import '../pages/home_page.dart';
@@ -98,6 +99,17 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
         child: const ExtensionsPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/csv-import',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const CSVImportPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

@@ -19,7 +19,7 @@
 ---
 
 <div align="center">
-<img src="showcase.gif" alt="FLACidal Mobile Showcase" width="800">
+<img src="screenshot.jpg" alt="FLACidal Mobile" width="300">
 </div>
 
 ---

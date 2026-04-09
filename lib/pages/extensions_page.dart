@@ -16,8 +16,22 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
   late final TabController _tabController;
   List<dynamic> _installed = [];
   List<dynamic> _registry = [];
+  List<String> _sources = [];
   bool _loadingInstalled = true;
   bool _loadingRegistry = false;
+
+  // Browse tab filters
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+  final _searchController = TextEditingController();
+
+  static const _categories = [
+    'All',
+    'Download',
+    'Metadata',
+    'Lyrics',
+    'Utility',
+  ];
 
   @override
   void initState() {
@@ -29,6 +43,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -50,8 +65,14 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
     try {
       final core = ref.read(flacCoreProvider);
       final result = core.callSync('getExtensionRegistry', {'url': ''});
+      final sourcesResult = core.callSync('getExtensionSources');
       setState(() {
         _registry = result['result'] as List<dynamic>? ?? [];
+        _sources =
+            (sourcesResult['result'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
         _loadingRegistry = false;
       });
     } catch (e) {
@@ -213,6 +234,66 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
     }
   }
 
+  Future<void> _addSource() async {
+    final controller = TextEditingController();
+    final url = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Extension Source'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'GitHub Repository URL',
+            hintText: 'https://github.com/owner/repo',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text('Add')),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (url != null && url.isNotEmpty) {
+      try {
+        ref.read(flacCoreProvider)
+            .callSync('addExtensionSource', {'url': url});
+        setState(() => _sources.add(url));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Source added')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _removeSource(String url) async {
+    try {
+      ref.read(flacCoreProvider)
+          .callSync('removeExtensionSource', {'url': url});
+      setState(() => _sources.remove(url));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -327,6 +408,31 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
     );
   }
 
+  List<dynamic> get _filteredRegistry {
+    return _registry.where((item) {
+      final m = item as Map<String, dynamic>;
+      final name = (m['name'] as String? ?? '').toLowerCase();
+      final desc = (m['description'] as String? ?? '').toLowerCase();
+      final category = (m['category'] as String? ?? '').toLowerCase();
+      final query = _searchQuery.toLowerCase();
+
+      // Search filter
+      if (query.isNotEmpty &&
+          !name.contains(query) &&
+          !desc.contains(query)) {
+        return false;
+      }
+
+      // Category filter
+      if (_selectedCategory != 'All' &&
+          category != _selectedCategory.toLowerCase()) {
+        return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
   Widget _buildRegistryTab() {
     if (_loadingRegistry) {
       return const Center(child: CircularProgressIndicator());
@@ -356,38 +462,137 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
           return m['id'] as String? ?? '';
         }).toSet();
 
+    final filtered = _filteredRegistry;
+
     return RefreshIndicator(
       onRefresh: _loadRegistry,
-      child: ListView.builder(
-        itemCount: _registry.length,
-        itemBuilder: (context, i) {
-          final item = _registry[i] as Map<String, dynamic>;
-          final id = item['id'] as String? ?? '';
-          final name = item['name'] as String? ?? id;
-          final desc = item['description'] as String? ?? '';
-          final version = item['latestVersion'] as String? ?? '';
-          final downloadURL = item['downloadURL'] as String? ?? '';
-          final installed = installedIds.contains(id);
-
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.extension)),
-              title: Text(name),
-              subtitle: Text(
-                  '$desc${version.isNotEmpty ? '\nv$version' : ''}'),
-              isThreeLine: desc.isNotEmpty,
-              trailing: installed
-                  ? const Chip(label: Text('Installed'))
-                  : FilledButton(
-                      onPressed: downloadURL.isNotEmpty
-                          ? () => _installExtension(downloadURL)
-                          : null,
-                      child: const Text('Install'),
-                    ),
+      child: CustomScrollView(
+        slivers: [
+          // Search bar
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search extensions...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              ),
             ),
-          );
-        },
+          ),
+          // Category chips
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Wrap(
+                spacing: 8,
+                children: _categories.map((cat) {
+                  final selected = _selectedCategory == cat;
+                  return FilterChip(
+                    label: Text(cat),
+                    selected: selected,
+                    onSelected: (_) =>
+                        setState(() => _selectedCategory = cat),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          // Extension list
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, i) {
+                final item = filtered[i] as Map<String, dynamic>;
+                final id = item['id'] as String? ?? '';
+                final name = item['name'] as String? ?? id;
+                final desc = item['description'] as String? ?? '';
+                final version = item['latestVersion'] as String? ?? '';
+                final downloadURL = item['downloadURL'] as String? ?? '';
+                final installed = installedIds.contains(id);
+
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: ListTile(
+                    leading: const CircleAvatar(child: Icon(Icons.extension)),
+                    title: Text(name),
+                    subtitle: Text(
+                        '$desc${version.isNotEmpty ? '\nv$version' : ''}'),
+                    isThreeLine: desc.isNotEmpty,
+                    trailing: installed
+                        ? const Chip(label: Text('Installed'))
+                        : FilledButton(
+                            onPressed: downloadURL.isNotEmpty
+                                ? () => _installExtension(downloadURL)
+                                : null,
+                            child: const Text('Install'),
+                          ),
+                  ),
+                );
+              },
+              childCount: filtered.length,
+            ),
+          ),
+          // Sources section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
+              child: Row(
+                children: [
+                  Text('Sources',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: _addSource,
+                    tooltip: 'Add source',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_sources.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Text('No additional sources configured',
+                    style: TextStyle(color: Colors.grey)),
+              ),
+            ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, i) {
+                final url = _sources[i];
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  child: ListTile(
+                    leading: const Icon(Icons.source),
+                    title: Text(url, style: const TextStyle(fontSize: 13)),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => _removeSource(url),
+                    ),
+                  ),
+                );
+              },
+              childCount: _sources.length,
+            ),
+          ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+        ],
       ),
     );
   }

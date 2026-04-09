@@ -12,6 +12,7 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
 
 enum _SearchService { all, tidal, qobuz }
+enum _SortMode { relevance, dateDesc, az, za }
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -29,6 +30,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
   String? _error;
   _SearchService _service = _SearchService.all;
   bool _songsOnly = false;
+  _SortMode _sortMode = _SortMode.relevance;
   List<dynamic> _tracks = [];
   List<dynamic> _albums = [];
   List<dynamic> _artists = [];
@@ -127,6 +129,37 @@ class _SearchPageState extends ConsumerState<SearchPage>
     }
   }
 
+  void _applySorting() {
+    if (_sortMode == _SortMode.relevance) return; // Keep original order
+    int Function(dynamic, dynamic) comparator;
+    switch (_sortMode) {
+      case _SortMode.az:
+        comparator = (a, b) {
+          final aTitle = ((a as Map)['title'] ?? (a)['Title'] ?? '').toString().toLowerCase();
+          final bTitle = ((b as Map)['title'] ?? (b)['Title'] ?? '').toString().toLowerCase();
+          return aTitle.compareTo(bTitle);
+        };
+      case _SortMode.za:
+        comparator = (a, b) {
+          final aTitle = ((a as Map)['title'] ?? (a)['Title'] ?? '').toString().toLowerCase();
+          final bTitle = ((b as Map)['title'] ?? (b)['Title'] ?? '').toString().toLowerCase();
+          return bTitle.compareTo(aTitle);
+        };
+      case _SortMode.dateDesc:
+        comparator = (a, b) {
+          final aDate = ((a as Map)['releaseDate'] ?? (a)['ReleaseDate'] ?? '').toString();
+          final bDate = ((b as Map)['releaseDate'] ?? (b)['ReleaseDate'] ?? '').toString();
+          return bDate.compareTo(aDate);
+        };
+      case _SortMode.relevance:
+        return;
+    }
+    setState(() {
+      _tracks.sort(comparator);
+      _albums.sort(comparator);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final hintService = switch (_service) {
@@ -198,6 +231,33 @@ class _SearchPageState extends ConsumerState<SearchPage>
                       },
                       visualDensity: VisualDensity.compact,
                     ),
+                    if (_hasResults) ...[
+                      const SizedBox(width: 8),
+                      PopupMenuButton<_SortMode>(
+                        onSelected: (v) {
+                          setState(() {
+                            _sortMode = v;
+                            _applySorting();
+                          });
+                        },
+                        itemBuilder: (_) => const [
+                          CheckedPopupMenuItem(value: _SortMode.relevance, child: Text('Relevance')),
+                          CheckedPopupMenuItem(value: _SortMode.dateDesc, child: Text('Date')),
+                          CheckedPopupMenuItem(value: _SortMode.az, child: Text('A-Z')),
+                          CheckedPopupMenuItem(value: _SortMode.za, child: Text('Z-A')),
+                        ],
+                        child: Chip(
+                          avatar: const Icon(Icons.sort, size: 16),
+                          label: Text(switch (_sortMode) {
+                            _SortMode.relevance => 'Relevance',
+                            _SortMode.dateDesc => 'Date',
+                            _SortMode.az => 'A-Z',
+                            _SortMode.za => 'Z-A',
+                          }),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

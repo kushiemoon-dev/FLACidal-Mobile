@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 import 'edit_metadata_page.dart';
+import 'local_album_page.dart';
 
 /// Library page — browse downloaded FLAC files.
 class LibraryPage extends ConsumerStatefulWidget {
@@ -21,6 +22,14 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   String _sortBy = 'name'; // name, date, size
   String _searchQuery = '';
   final _searchController = TextEditingController();
+
+  // Filter state
+  String _sourceFilter = 'all'; // all, tidal, qobuz, unknown
+  String _qualityFilter = 'all'; // all, standard, hires
+  String _formatFilter = 'all'; // all, flac, mp3, opus
+
+  // View mode: tracks or albums
+  bool _albumView = false;
 
   @override
   void initState() {
@@ -281,6 +290,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       appBar: AppBar(
         title: Text('Library${flacCount > 0 ? ' ($flacCount)' : ''}'),
         actions: [
+          IconButton(
+            icon: Icon(_albumView ? Icons.list : Icons.album),
+            tooltip: _albumView ? 'Track view' : 'Album view',
+            onPressed: () => setState(() => _albumView = !_albumView),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sort',
@@ -296,10 +310,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               CheckedPopupMenuItem(value: 'size', checked: _sortBy == 'size', child: const Text('Size')),
             ],
           ),
-          IconButton(
-            icon: Icon(_gridView ? Icons.list : Icons.grid_view),
-            onPressed: () => setState(() => _gridView = !_gridView),
-          ),
+          if (!_albumView)
+            IconButton(
+              icon: Icon(_gridView ? Icons.list : Icons.grid_view),
+              onPressed: () => setState(() => _gridView = !_gridView),
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -318,13 +333,101 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         .cast<Map<String, dynamic>>()
         .toList();
 
-    if (_searchQuery.isEmpty) return flacFiles;
+    var filtered = flacFiles;
 
-    final query = _searchQuery.toLowerCase();
-    return flacFiles.where((f) {
-      final name = (f['name'] ?? f['Name'] ?? '').toString().toLowerCase();
-      return name.contains(query);
-    }).toList();
+    // Source filter
+    if (_sourceFilter != 'all') {
+      filtered = filtered.where((f) {
+        final source = (f['source'] ?? 'unknown').toString().toLowerCase();
+        return source == _sourceFilter;
+      }).toList();
+    }
+
+    // Quality filter
+    if (_qualityFilter != 'all') {
+      filtered = filtered.where((f) {
+        final quality = (f['quality'] ?? '').toString().toLowerCase();
+        if (_qualityFilter == 'hires') {
+          return quality.contains('24-bit');
+        } else {
+          return quality.contains('16-bit') || !quality.contains('24-bit');
+        }
+      }).toList();
+    }
+
+    // Format filter
+    if (_formatFilter != 'all') {
+      filtered = filtered.where((f) {
+        final format = (f['format'] ?? 'flac').toString().toLowerCase();
+        return format == _formatFilter;
+      }).toList();
+    }
+
+    // Search filter
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((f) {
+        final name = (f['name'] ?? f['Name'] ?? '').toString().toLowerCase();
+        final title = (f['title'] ?? '').toString().toLowerCase();
+        final artist = (f['artist'] ?? '').toString().toLowerCase();
+        final album = (f['album'] ?? '').toString().toLowerCase();
+        return name.contains(query) || title.contains(query) ||
+            artist.contains(query) || album.contains(query);
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  bool get _hasActiveFilters =>
+      _sourceFilter != 'all' || _qualityFilter != 'all' || _formatFilter != 'all';
+
+  Widget _buildFilterChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          // Source filter
+          _FilterChipDropdown(
+            label: 'Source',
+            value: _sourceFilter,
+            options: const {'all': 'All', 'tidal': 'Tidal', 'qobuz': 'Qobuz', 'unknown': 'Unknown'},
+            onChanged: (v) => setState(() => _sourceFilter = v),
+          ),
+          const SizedBox(width: 8),
+          // Quality filter
+          _FilterChipDropdown(
+            label: 'Quality',
+            value: _qualityFilter,
+            options: const {'all': 'All', 'standard': '16-bit', 'hires': '24-bit Hi-Res'},
+            onChanged: (v) => setState(() => _qualityFilter = v),
+          ),
+          const SizedBox(width: 8),
+          // Format filter
+          _FilterChipDropdown(
+            label: 'Format',
+            value: _formatFilter,
+            options: const {'all': 'All', 'flac': 'FLAC', 'mp3': 'MP3', 'opus': 'Opus'},
+            onChanged: (v) => setState(() => _formatFilter = v),
+          ),
+          if (_hasActiveFilters) ...[
+            const SizedBox(width: 8),
+            ActionChip(
+              label: const Text('Clear'),
+              onPressed: () {
+                setState(() {
+                  _sourceFilter = 'all';
+                  _qualityFilter = 'all';
+                  _formatFilter = 'all';
+                });
+              },
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildBody() {
@@ -351,7 +454,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -371,15 +474,65 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             onChanged: (v) => setState(() => _searchQuery = v),
           ),
         ),
+        const SizedBox(height: 4),
+        _buildFilterChips(),
+        const SizedBox(height: 4),
         if (flacFiles.isEmpty)
           const Expanded(
             child: Center(child: Text('No matching files')),
           )
+        else if (_albumView)
+          Expanded(child: _buildAlbumView(flacFiles))
         else if (_gridView)
           Expanded(child: _buildGridView(flacFiles))
         else
           Expanded(child: _buildListView(flacFiles)),
       ],
+    );
+  }
+
+  /// Group files by album and display as album cards.
+  Widget _buildAlbumView(List<Map<String, dynamic>> flacFiles) {
+    final albumGroups = <String, List<Map<String, dynamic>>>{};
+    for (final file in flacFiles) {
+      final album = (file['album'] ?? '').toString();
+      final key = album.isNotEmpty ? album : 'Unknown Album';
+      albumGroups.putIfAbsent(key, () => []).add(file);
+    }
+
+    final albums = albumGroups.entries.toList()
+      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
+
+    return ListView.builder(
+      itemCount: albums.length,
+      itemBuilder: (context, index) {
+        final entry = albums[index];
+        final albumName = entry.key;
+        final tracks = entry.value;
+        final artist = (tracks.first['artist'] ?? '').toString();
+        final quality = (tracks.first['quality'] ?? '').toString();
+
+        return ListTile(
+          leading: _buildCoverArt(tracks.first, size: 48),
+          title: Text(albumName, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text(
+            '${artist.isNotEmpty ? '$artist · ' : ''}${tracks.length} tracks${quality.isNotEmpty ? ' · $quality' : ''}',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            final shouldRefresh = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LocalAlbumPage(
+                  albumName: albumName,
+                  tracks: tracks,
+                ),
+              ),
+            );
+            if (shouldRefresh == true) _loadFiles();
+          },
+        );
+      },
     );
   }
 
@@ -500,5 +653,40 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+}
+
+/// A dropdown disguised as a filter chip.
+class _FilterChipDropdown extends StatelessWidget {
+  final String label;
+  final String value;
+  final Map<String, String> options;
+  final ValueChanged<String> onChanged;
+
+  const _FilterChipDropdown({
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = value != 'all';
+    return PopupMenuButton<String>(
+      onSelected: onChanged,
+      itemBuilder: (_) => options.entries
+          .map((e) => CheckedPopupMenuItem(
+                value: e.key,
+                checked: value == e.key,
+                child: Text(e.value),
+              ))
+          .toList(),
+      child: Chip(
+        label: Text(isActive ? '${options[value]}' : label),
+        avatar: isActive ? const Icon(Icons.filter_alt, size: 16) : null,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
   }
 }

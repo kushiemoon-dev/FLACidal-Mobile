@@ -28,6 +28,7 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
   Map<String, dynamic>? _content;
   Set<int> _selected = {};
   Color? _dominantColor;
+  Set<int> _downloadedIndices = {};
 
   @override
   void initState() {
@@ -53,6 +54,7 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
         _selected = Set.from(List.generate(tracks.length, (i) => i));
       });
       _extractDominantColor(content);
+      _checkDownloadedTracks();
     } on FlacCoreException catch (e) {
       setState(() {
         _error = e.message;
@@ -81,6 +83,27 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
       }
     } catch (_) {
       // Fallback handled in build — _dominantColor stays null
+    }
+  }
+
+  /// Check each track's ISRC against the download history in the background.
+  Future<void> _checkDownloadedTracks() async {
+    final tracks = _getTracks();
+    if (tracks.isEmpty) return;
+    final core = ref.read(flacCoreProvider);
+    final downloaded = <int>{};
+    for (int i = 0; i < tracks.length; i++) {
+      final track = tracks[i] as Map<String, dynamic>;
+      final isrc = (track['isrc'] ?? track['ISRC'] ?? '').toString();
+      if (isrc.isEmpty) continue;
+      try {
+        final result = await core.callAsync('checkDownloaded', {'isrc': isrc});
+        final isDownloaded = result['result']?['downloaded'] == true;
+        if (isDownloaded) downloaded.add(i);
+      } catch (_) {}
+    }
+    if (mounted) {
+      setState(() => _downloadedIndices = downloaded);
     }
   }
 
@@ -188,23 +211,58 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
               final trackNum = track['trackNumber'] ?? track['TrackNumber'] ?? (i + 1);
               final duration = ((track['duration'] ?? track['Duration'] ?? 0) as num).toInt();
               final selected = _selected.contains(i);
+              final isDownloaded = _downloadedIndices.contains(i);
 
-              return TrackListTile(
-                trackNumber: (trackNum as num).toInt(),
-                title: trackTitle.toString(),
-                artist: trackArtist.toString(),
-                duration: duration,
-                selected: selected,
-                onTap: () {
-                  setState(() {
-                    _selected = Set.from(_selected);
-                    if (selected) {
-                      _selected.remove(i);
-                    } else {
-                      _selected.add(i);
-                    }
-                  });
+              return Stack(
+                children: [
+                  TrackListTile(
+                    trackNumber: (trackNum as num).toInt(),
+                    title: trackTitle.toString(),
+                    artist: trackArtist.toString(),
+                    duration: duration,
+                    selected: selected,
+                    onTap: () {
+                      setState(() {
+                        _selected = Set.from(_selected);
+                        if (selected) {
+                          _selected.remove(i);
+                        } else {
+                          _selected.add(i);
+                        }
+                      });
                 },
+              ),
+                  if (isDownloaded)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              'In Library',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
             childCount: tracks.length,

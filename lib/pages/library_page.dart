@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/flac_core.dart';
 import '../providers/core_provider.dart';
+import 'edit_metadata_page.dart';
 
 /// Library page — browse downloaded FLAC files.
 class LibraryPage extends ConsumerStatefulWidget {
@@ -113,10 +113,119 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       ],
                     ),
                   )),
+              const Divider(height: 32),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    icon: const Icon(Icons.edit, size: 18),
+                    label: const Text('Edit Metadata'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditMetadataPage(
+                            filePath: path.toString(),
+                            initialMetadata: meta,
+                          ),
+                        ),
+                      ).then((edited) {
+                        if (edited == true) _loadFiles();
+                      });
+                    },
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.image, size: 18),
+                    label: const Text('Save Cover Art'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _extractCoverArt(path.toString());
+                    },
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.lyrics, size: 18),
+                    label: const Text('Save Lyrics'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _saveLyricsToFile(path.toString());
+                    },
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.auto_fix_high, size: 18),
+                    label: const Text('Re-enrich'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _reEnrichMetadata(path.toString());
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _extractCoverArt(String path) async {
+    try {
+      final core = ref.read(flacCoreProvider);
+      final result = core.callSync('extractCoverArt', {'path': path});
+      final savedPath = result['result']?['path'] ?? 'unknown';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cover art saved: $savedPath')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveLyricsToFile(String path) async {
+    try {
+      final core = ref.read(flacCoreProvider);
+      final result = core.callSync('saveLyricsToFile', {'path': path});
+      final savedPath = result['result']?['path'] ?? 'unknown';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lyrics saved: $savedPath')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _reEnrichMetadata(String path) async {
+    try {
+      final core = ref.read(flacCoreProvider);
+      final result = core.callSync('reEnrichMetadata', {'path': path});
+      final fields = result['result']?['updated_fields'] as List? ?? [];
+      if (mounted) {
+        final msg = fields.isEmpty
+            ? 'No additional metadata found'
+            : 'Updated: ${fields.join(", ")}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

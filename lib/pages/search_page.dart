@@ -343,7 +343,14 @@ class _TrackResults extends StatelessWidget {
           duration: duration,
           onDownload: () {
             final core = ref.read(flacCoreProvider);
-            core.queueDownloads([t], core.downloadDir);
+            if (t['source'] == 'qobuz') {
+              core.callSync('queueQobuzDownloads', {
+                'tracks': [t],
+                'outputDir': core.downloadDir,
+              });
+            } else {
+              core.queueDownloads([t], core.downloadDir);
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Queued: $title')),
             );

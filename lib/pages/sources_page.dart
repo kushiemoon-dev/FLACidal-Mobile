@@ -100,11 +100,12 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
     final core = ref.read(flacCoreProvider);
     try {
       final result = core.callSync('testQobuzConnection');
-      final ok = result['success'] as bool? ?? false;
+      final inner = result['result'] as Map<String, dynamic>? ?? {};
+      final ok = inner['success'] as bool? ?? false;
       if (ok) {
         _showSuccess('Connection successful');
       } else {
-        final msg = result['error'] as String? ?? 'Unknown error';
+        final msg = inner['error'] as String? ?? 'Unknown error';
         _showError('Connection failed: $msg');
       }
     } catch (e) {

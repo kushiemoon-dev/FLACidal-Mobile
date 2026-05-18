@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/exceptions.dart';
-import '../core/flac_core.dart';
 import '../providers/core_provider.dart';
 import '../widgets/gradient_header.dart';
 import '../widgets/skeleton_loader.dart';

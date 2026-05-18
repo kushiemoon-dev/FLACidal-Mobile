@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/flac_core.dart';
 import '../providers/core_provider.dart';
 
 /// Displays files grouped by album, with disc grouping and track ordering.

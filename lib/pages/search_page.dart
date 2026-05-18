@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/exceptions.dart';
-import '../core/flac_core.dart';
 import '../providers/core_provider.dart';
 import '../widgets/cover_art_tile.dart';
 import '../widgets/skeleton_loader.dart';

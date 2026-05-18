@@ -16,7 +16,6 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
   bool _loading = true;
   bool _converting = false;
   bool _converterAvailable = false;
-  List<dynamic> _formats = [];
   String _selectedFormat = 'mp3';
   int _bitrate = 320;
   bool _deleteSource = false;
@@ -34,15 +33,8 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
       final available = core.callSync('isConverterAvailable');
       final avail = available['result'] as bool? ?? false;
 
-      List<dynamic> formats = [];
-      if (avail) {
-        final fmtResult = core.callSync('getConversionFormats');
-        formats = fmtResult['result'] as List<dynamic>? ?? [];
-      }
-
       setState(() {
         _converterAvailable = avail;
-        _formats = formats;
         _loading = false;
       });
     } catch (e) {

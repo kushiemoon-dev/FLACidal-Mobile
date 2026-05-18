@@ -40,7 +40,6 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
   String _syncedLyrics = '';
   String _trackName = '';
   String _artistName = '';
-  String _albumName = '';
   String _source = '';
   bool _instrumental = false;
 
@@ -91,7 +90,6 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
         _syncedLyrics = (data['syncedLyrics'] ?? data['synced'] ?? '').toString();
         _trackName = (data['trackName'] ?? '').toString();
         _artistName = (data['artistName'] ?? '').toString();
-        _albumName = (data['albumName'] ?? '').toString();
         _source = (data['source'] ?? '').toString();
         _instrumental = data['instrumental'] == true;
         _loading = false;

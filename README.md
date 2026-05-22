@@ -24,11 +24,6 @@
 
 ---
 
-## Warning
-
-All provider at the moment for tidal proxy are down and discourage user for creating them. Im working right now on a solution and will actively update to find it. Please get in mind that as much as this text is visible the issue is not solve. XOXO Kushiemoon
-
-
 ## Overview
 
 **FLACidal Mobile** is the mobile companion to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal). Paste a Tidal URL, select tracks, and download Hi-Res or Lossless FLAC files directly to your phone — no account required.

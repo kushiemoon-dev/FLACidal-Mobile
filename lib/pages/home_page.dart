@@ -66,16 +66,20 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     try {
-      // If not a Tidal/Qobuz URL, try resolving via Odesli
+      // For non-native URLs (not Tidal/Qobuz/Deezer/Bandcamp), try resolving via Odesli
       final lower = url.toLowerCase();
-      if (!lower.contains('tidal.com') && !lower.contains('qobuz.com')) {
+      final isNativeUrl = lower.contains('tidal.com') ||
+          lower.contains('qobuz.com') ||
+          lower.contains('deezer.com') ||
+          lower.contains('bandcamp.com');
+      if (!isNativeUrl) {
         final resolved = await URLResolver.resolve(url);
         if (resolved != null) {
           url = resolved.bestUrl;
           _urlController.text = url;
         } else {
           setState(() {
-            _error = 'Could not resolve URL to Tidal/Qobuz';
+            _error = 'Could not resolve URL to a supported source';
             _loading = false;
           });
           return;

@@ -191,7 +191,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: TextField(
                     controller: _urlController,
                     decoration: InputDecoration(
-                      hintText: 'Paste Tidal or Qobuz URL...',
+                      hintText: 'Paste Tidal, Qobuz, Deezer or Bandcamp URL...',
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.content_paste),
@@ -264,7 +264,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   children: [
                     Icon(Icons.music_note, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
-                    Text('Paste a Tidal or Qobuz URL to get started'),
+                    Text('Paste a Tidal, Qobuz, Deezer or Bandcamp URL to get started'),
                   ],
                 ),
               ),

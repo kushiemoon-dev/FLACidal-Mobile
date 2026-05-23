@@ -21,10 +21,22 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
   bool _fallbackEnabled = false;
   bool _loading = true;
 
+  List<String> _sourceOrder = ['tidal', 'qobuz', 'amazon', 'bandcamp'];
+  bool _sourceOrderLoaded = false;
+
+  static const _sourceLabels = <String, String>{
+    'tidal': 'Tidal',
+    'qobuz': 'Qobuz',
+    'amazon': 'Amazon Music',
+    'bandcamp': 'Bandcamp',
+    'soulseek': 'Soulseek (desktop only)',
+  };
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadSourceOrder();
   }
 
   @override
@@ -113,6 +125,32 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
     }
   }
 
+  Future<void> _loadSourceOrder() async {
+    final core = ref.read(flacCoreProvider);
+    try {
+      final result = core.callSync('getSourceOrder');
+      final list = result['result'];
+      if (list is List) {
+        setState(() {
+          _sourceOrder = List<String>.from(list);
+          _sourceOrderLoaded = true;
+        });
+      }
+    } catch (_) {
+      // Non-fatal: keep default order
+      setState(() => _sourceOrderLoaded = true);
+    }
+  }
+
+  Future<void> _saveSourceOrder(List<String> order) async {
+    final core = ref.read(flacCoreProvider);
+    try {
+      core.callSync('setSourceOrder', {'order': order});
+    } catch (e) {
+      _showError('Failed to save source order: $e');
+    }
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -135,6 +173,46 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
+                // ── Source Priority ──────────────────
+                const _SectionHeader('Priorité des sources'),
+                if (!_sourceOrderLoaded)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: LinearProgressIndicator(),
+                  )
+                else
+                  Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: ReorderableListView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          if (newIndex > oldIndex) newIndex--;
+                          final item = _sourceOrder.removeAt(oldIndex);
+                          _sourceOrder.insert(newIndex, item);
+                        });
+                        _saveSourceOrder(_sourceOrder);
+                      },
+                      children: [
+                        for (int i = 0; i < _sourceOrder.length; i++)
+                          ListTile(
+                            key: ValueKey(_sourceOrder[i]),
+                            leading: const Icon(Icons.drag_handle),
+                            title: Text(
+                              _sourceLabels[_sourceOrder[i]] ?? _sourceOrder[i],
+                            ),
+                            trailing: _sourceOrder[i] == 'soulseek'
+                                ? const Chip(label: Text('Desktop only'))
+                                : Text(
+                                    '${i + 1}',
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+                          ),
+                      ],
+                    ),
+                  ),
+
                 // ── Available Sources ────────────────
                 const _SectionHeader('Available Sources'),
                 if (_sources.isEmpty)

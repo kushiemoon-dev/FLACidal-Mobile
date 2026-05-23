@@ -10,7 +10,7 @@ import '../widgets/cover_art_tile.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
 
-enum _SearchService { all, tidal, qobuz }
+enum _SearchService { all, tidal, qobuz, deezer }
 enum _SortMode { relevance, dateDesc, az, za }
 
 class SearchPage extends ConsumerStatefulWidget {
@@ -33,11 +33,13 @@ class _SearchPageState extends ConsumerState<SearchPage>
   List<dynamic> _tracks = [];
   List<dynamic> _albums = [];
   List<dynamic> _artists = [];
+  List<Map<String, dynamic>> _deezerResults = [];
+  bool _isDeezerSearching = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -55,9 +57,33 @@ class _SearchPageState extends ConsumerState<SearchPage>
     });
   }
 
+  Future<void> _searchDeezer(String query) async {
+    if (query.isEmpty) return;
+    setState(() => _isDeezerSearching = true);
+    try {
+      final core = ref.read(flacCoreProvider);
+      final result = await core.callAsync('searchDeezer', {'query': query});
+      final list = result['result'];
+      if (list is List) {
+        setState(() {
+          _deezerResults = list.cast<Map<String, dynamic>>();
+        });
+      }
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _isDeezerSearching = false);
+    }
+  }
+
   Future<void> _search() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
+
+    if (_service == _SearchService.deezer) {
+      await _searchDeezer(query);
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -165,6 +191,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
       _SearchService.all => '',
       _SearchService.tidal => 'Tidal',
       _SearchService.qobuz => 'Qobuz',
+      _SearchService.deezer => 'Deezer',
     };
     final hintText = 'Search${hintService.isNotEmpty ? ' $hintService' : ''}...';
 
@@ -206,6 +233,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
                         _SearchService.all => 'All',
                         _SearchService.tidal => 'Tidal',
                         _SearchService.qobuz => 'Qobuz',
+                        _SearchService.deezer => 'Deezer',
                       };
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
@@ -267,6 +295,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
                     Tab(text: 'Tracks (${_tracks.length})'),
                     Tab(text: 'Albums (${_albums.length})'),
                     Tab(text: 'Artists (${_artists.length})'),
+                    Tab(text: 'Deezer (${_deezerResults.length})'),
                   ],
                 ),
             ],
@@ -278,7 +307,10 @@ class _SearchPageState extends ConsumerState<SearchPage>
   }
 
   bool get _hasResults =>
-      _tracks.isNotEmpty || _albums.isNotEmpty || _artists.isNotEmpty;
+      _tracks.isNotEmpty ||
+      _albums.isNotEmpty ||
+      _artists.isNotEmpty ||
+      _deezerResults.isNotEmpty;
 
   Widget _buildBody() {
     if (_loading) return const SkeletonLoader(layout: SkeletonLayout.searchResults);
@@ -315,6 +347,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
         _TrackResults(tracks: _tracks, ref: ref),
         _AlbumResults(albums: _albums),
         _ArtistResults(artists: _artists),
+        _DeezerResults(results: _deezerResults, ref: ref),
       ],
     );
   }
@@ -416,6 +449,79 @@ class _ArtistResults extends StatelessWidget {
           leading: const CircleAvatar(child: Icon(Icons.person)),
           title: Text(name.toString()),
           trailing: const Icon(Icons.chevron_right),
+        );
+      },
+    );
+  }
+}
+
+class _DeezerResults extends StatelessWidget {
+  final List<Map<String, dynamic>> results;
+  final WidgetRef ref;
+  const _DeezerResults({required this.results, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    if (results.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.music_note, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('Search via Deezer for universal results'),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (context, i) {
+        final t = results[i];
+        final title = t['title'] ?? t['Title'] ?? 'Unknown';
+        final artist = t['artist'] ?? t['Artist'] ?? '';
+        final duration = ((t['duration'] ?? t['Duration'] ?? 0) as num).toInt();
+        final coverUrl = t['coverUrl'] ?? t['CoverURL'] ?? '';
+        final id = t['id'] ?? t['ID'];
+
+        return ListTile(
+          leading: coverUrl.toString().isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.network(
+                    coverUrl.toString(),
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.music_note, size: 48),
+                  ),
+                )
+              : const Icon(Icons.music_note, size: 48),
+          title: Text(title.toString(), maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text(
+            '${artist.toString()}${duration > 0 ? ' · ${duration ~/ 60}:${(duration % 60).toString().padLeft(2, '0')}' : ''}',
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: id == null
+                ? null
+                : () {
+                    final url = 'https://www.deezer.com/track/$id';
+                    final core = ref.read(flacCoreProvider);
+                    final content = core.callSync('fetchContent', {'url': url});
+                    final tracks = (content['result']?['tracks'] as List?)
+                            ?.cast<Map<String, dynamic>>() ??
+                        [content['result'] as Map<String, dynamic>? ?? t];
+                    core.callSync('queueDownloads', {
+                      'tracks': tracks,
+                      'outputDir': core.downloadDir,
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Queued: $title')),
+                    );
+                  },
+          ),
         );
       },
     );

@@ -22,6 +22,7 @@ jobs:
         with:
           repository: kushiemoon-dev/flacidal-core
           path: flacidal-core
+          token: ${{ secrets.CORE_ACCESS_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v5

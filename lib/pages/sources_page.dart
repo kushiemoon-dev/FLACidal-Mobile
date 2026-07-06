@@ -21,7 +21,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
   bool _fallbackEnabled = false;
   bool _loading = true;
 
-  List<String> _sourceOrder = ['tidal', 'qobuz', 'amazon', 'bandcamp'];
+  List<String> _sourceOrder = ['soulseek', 'tidal', 'qobuz', 'amazon', 'bandcamp'];
   bool _sourceOrderLoaded = false;
 
   static const _sourceLabels = <String, String>{
@@ -29,7 +29,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
     'qobuz': 'Qobuz',
     'amazon': 'Amazon Music',
     'bandcamp': 'Bandcamp',
-    'soulseek': 'Soulseek (desktop only)',
+    'soulseek': 'Soulseek',
   };
 
   @override
@@ -202,12 +202,10 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                             title: Text(
                               _sourceLabels[_sourceOrder[i]] ?? _sourceOrder[i],
                             ),
-                            trailing: _sourceOrder[i] == 'soulseek'
-                                ? const Chip(label: Text('Desktop only'))
-                                : Text(
-                                    '${i + 1}',
-                                    style: const TextStyle(color: Colors.grey),
-                                  ),
+                            trailing: Text(
+                              '${i + 1}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
                           ),
                       ],
                     ),

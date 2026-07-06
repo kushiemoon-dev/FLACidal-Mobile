@@ -22,7 +22,17 @@ class DownloadService {
 
   static Future<void> start({required int total}) async {
     if (!_initialized) await init();
+
+    // Soulseek needs a long-lived TCP connection for the whole session —
+    // ask to be exempted from Doze/battery-optimization killing it. Cheap
+    // no-op if already granted; requires REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+    // in AndroidManifest.xml.
+    if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+    }
+
     await FlutterForegroundTask.startService(
+      serviceTypes: [ForegroundServiceTypes.dataSync],
       notificationTitle: 'FLACidal',
       notificationText: 'Downloading $total tracks...',
     );

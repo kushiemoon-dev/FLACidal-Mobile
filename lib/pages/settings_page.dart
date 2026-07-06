@@ -173,7 +173,7 @@ class SettingsPage extends ConsumerWidget {
           const ListTile(
             leading: Icon(Icons.info),
             title: Text('FLACidal Mobile'),
-            subtitle: Text('v0.8.0-beta.5 — Flutter + Go FFI'),
+            subtitle: Text('v0.8.0-beta.6 — Flutter + Go FFI'),
           ),
         ],
       ),

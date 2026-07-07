@@ -174,7 +174,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
           : ListView(
               children: [
                 // ── Source Priority ──────────────────
-                const _SectionHeader('Priorité des sources'),
+                const _SectionHeader('Source Priority'),
                 if (!_sourceOrderLoaded)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),

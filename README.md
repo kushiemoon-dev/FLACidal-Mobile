@@ -7,6 +7,7 @@
 **Download lossless FLAC music from Tidal & Qobuz on your phone**
 
 [![GitHub Release](https://img.shields.io/github/v/release/kushiemoon-dev/flacidal-mobile?style=flat-square&color=e5a00d)](https://github.com/kushiemoon-dev/flacidal-mobile/releases/latest)
+[![Stars](https://img.shields.io/github/stars/kushiemoon-dev/flacidal-mobile?style=flat-square&color=a855f7)](https://github.com/kushiemoon-dev/flacidal-mobile/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.41+-02569B?style=flat-square&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
@@ -173,11 +174,7 @@ Contributions are welcome! Areas where help is especially needed:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=kushiemoon-dev/FLACidal-Mobile&type=Date)](https://star-history.com/#kushiemoon-dev/FLACidal-Mobile&Date)
-
-### FLACidal Ecosystem
-
-[![Star History Chart](https://api.star-history.com/svg?repos=kushiemoon-dev/FLACidal,kushiemoon-dev/flacidal-core,kushiemoon-dev/FLACidal-Mobile&type=Date)](https://star-history.com/#kushiemoon-dev/FLACidal&kushiemoon-dev/flacidal-core&kushiemoon-dev/FLACidal-Mobile&Date)
+[![Star History](docs/star-history.svg)](https://github.com/kushiemoon-dev/flacidal-mobile/stargazers)
 
 ---
 

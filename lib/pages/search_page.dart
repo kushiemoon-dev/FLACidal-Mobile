@@ -34,7 +34,6 @@ class _SearchPageState extends ConsumerState<SearchPage>
   List<dynamic> _albums = [];
   List<dynamic> _artists = [];
   List<Map<String, dynamic>> _deezerResults = [];
-  bool _isDeezerSearching = false;
 
   @override
   void initState() {
@@ -59,7 +58,6 @@ class _SearchPageState extends ConsumerState<SearchPage>
 
   Future<void> _searchDeezer(String query) async {
     if (query.isEmpty) return;
-    setState(() => _isDeezerSearching = true);
     try {
       final core = ref.read(flacCoreProvider);
       final result = await core.callAsync('searchDeezer', {'query': query});
@@ -71,8 +69,6 @@ class _SearchPageState extends ConsumerState<SearchPage>
       }
     } catch (e) {
       setState(() => _error = e.toString());
-    } finally {
-      setState(() => _isDeezerSearching = false);
     }
   }
 

@@ -10,7 +10,7 @@
 [![Stars](https://img.shields.io/github/stars/kushiemoon-dev/flacidal-mobile?style=flat-square&color=a855f7)](https://github.com/kushiemoon-dev/flacidal-mobile/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.41+-02569B?style=flat-square&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 
 ![Android](https://img.shields.io/badge/Android-5.0+-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![iOS](https://img.shields.io/badge/iOS-planned-555555?style=flat-square&logo=apple&logoColor=white)
@@ -107,7 +107,7 @@ The Go backend handles all networking, downloads, metadata, and storage. Flutter
 
 ## Build from Source
 
-**Requirements:** Flutter 3.41+, Go 1.23+, Android NDK r29
+**Requirements:** Flutter 3.41+, Go 1.26+, Android NDK r29
 
 ```bash
 # 1. Build Go shared libraries

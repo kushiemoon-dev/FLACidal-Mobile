@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="banner.png" alt="FLACidal" width="600">
+<img src="docs/banner.png" alt="FLACidal" width="600">
 
 ### FLACidal Mobile
 
@@ -20,7 +20,7 @@
 ---
 
 <div align="center">
-<img src="screenshot.jpg" alt="FLACidal Mobile" width="300">
+<img src="docs/screenshot.jpg" alt="FLACidal Mobile" width="300">
 </div>
 
 ---

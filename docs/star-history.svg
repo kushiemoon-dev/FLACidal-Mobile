@@ -4,10 +4,10 @@
  <linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a855f7" stop-opacity=".35"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/></linearGradient>
 </defs>
 <rect width="800" height="250" rx="10" fill="#0d1117"/>
-<polygon points="40.0,210 40.0,193.0 96.3,176.0 247.2,159.0 401.4,142.0 459.9,125.0 544.2,108.0 700.7,91.0 727.8,74.0 755.8,57.0 760.0,40.0 760.0,210" fill="url(#f)"/>
-<polyline points="40.0,193.0 96.3,176.0 247.2,159.0 401.4,142.0 459.9,125.0 544.2,108.0 700.7,91.0 727.8,74.0 755.8,57.0 760.0,40.0" fill="none" stroke="url(#l)" stroke-width="2.5" stroke-linejoin="round"/>
-<text x="40" y="30" fill="#a855f7" font-size="16">&#9733; 10 stars</text>
+<polygon points="40.0,210 40.0,198.7 84.6,187.3 204.0,176.0 326.1,164.7 372.5,153.3 439.2,142.0 563.1,130.7 584.6,119.3 606.7,108.0 610.0,96.7 652.1,85.3 678.2,74.0 746.7,62.7 759.5,51.3 760.0,40.0 760.0,210" fill="url(#f)"/>
+<polyline points="40.0,198.7 84.6,187.3 204.0,176.0 326.1,164.7 372.5,153.3 439.2,142.0 563.1,130.7 584.6,119.3 606.7,108.0 610.0,96.7 652.1,85.3 678.2,74.0 746.7,62.7 759.5,51.3 760.0,40.0" fill="none" stroke="url(#l)" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="40" y="30" fill="#a855f7" font-size="16">&#9733; 15 stars</text>
 <text x="40" y="236" fill="#6b7280" font-size="11">2026-04-03</text>
-<text x="760" y="236" fill="#6b7280" font-size="11" text-anchor="end">2026-07-06</text>
+<text x="760" y="236" fill="#6b7280" font-size="11" text-anchor="end">2026-07-30</text>
 <text x="760" y="30" fill="#6b7280" font-size="12" text-anchor="end">Star History</text>
 </svg>

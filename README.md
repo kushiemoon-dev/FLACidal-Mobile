@@ -21,6 +21,7 @@
 
 <div align="center">
 <img src="docs/screenshot.jpg" alt="FLACidal Mobile" width="300">
+<img src="docs/screenshot-search.png" alt="FLACidal Mobile search results" width="300">
 </div>
 
 ---

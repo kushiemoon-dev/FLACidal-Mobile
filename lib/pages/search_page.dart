@@ -222,7 +222,9 @@ class _SearchPageState extends ConsumerState<SearchPage>
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                   children: [
                     ..._SearchService.values.map((s) {
                       final label = switch (s) {
@@ -282,6 +284,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
                       ),
                     ],
                   ],
+                  ),
                 ),
               ),
               if (_hasResults)

@@ -1,13 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="100%" font-family="monospace">
-<defs>
- <linearGradient id="l" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#e91e8c"/></linearGradient>
- <linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a855f7" stop-opacity=".35"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/></linearGradient>
-</defs>
-<rect width="800" height="250" rx="10" fill="#0d1117"/>
-<polygon points="40.0,210 40.0,200.0 82.5,190.0 196.4,180.0 312.8,170.0 357.0,160.0 420.6,150.0 538.7,140.0 559.2,130.0 580.3,120.0 583.5,110.0 623.6,100.0 648.5,90.0 713.8,80.0 726.0,70.0 726.5,60.0 747.7,50.0 760.0,40.0 760.0,210" fill="url(#f)"/>
-<polyline points="40.0,200.0 82.5,190.0 196.4,180.0 312.8,170.0 357.0,160.0 420.6,150.0 538.7,140.0 559.2,130.0 580.3,120.0 583.5,110.0 623.6,100.0 648.5,90.0 713.8,80.0 726.0,70.0 726.5,60.0 747.7,50.0 760.0,40.0" fill="none" stroke="url(#l)" stroke-width="2.5" stroke-linejoin="round"/>
-<text x="40" y="30" fill="#a855f7" font-size="16">&#9733; 17 stars</text>
-<text x="40" y="236" fill="#6b7280" font-size="11">2026-04-03</text>
-<text x="760" y="236" fill="#6b7280" font-size="11" text-anchor="end">2026-08-05</text>
-<text x="760" y="30" fill="#6b7280" font-size="12" text-anchor="end">Star History</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" font-family="monospace" viewBox="0 0 800 250"><defs><linearGradient id="l" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#e91e8c"/></linearGradient><linearGradient id="f" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a855f7" stop-opacity=".35"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs><rect width="800" height="250" fill="#0d1117" rx="10"/><polygon fill="url(#f)" points="40 210 40 200 82.5 190 196.4 180 312.8 170 357 160 420.6 150 538.7 140 559.2 130 580.3 120 583.5 110 623.6 100 648.5 90 713.8 80 726 70 726.5 60 747.7 50 760 40 760 210"/><polyline fill="none" stroke="url(#l)" stroke-linejoin="round" stroke-width="2.5" points="40 200 82.5 190 196.4 180 312.8 170 357 160 420.6 150 538.7 140 559.2 130 580.3 120 583.5 110 623.6 100 648.5 90 713.8 80 726 70 726.5 60 747.7 50 760 40"/><text x="40" y="30" fill="#a855f7" font-size="16">★ 17 stars</text><text x="40" y="236" fill="#6b7280" font-size="11">2026-04-03</text><text x="760" y="236" fill="#6b7280" font-size="11" text-anchor="end">2026-08-05</text><text x="760" y="30" fill="#6b7280" font-size="12" text-anchor="end">Star History</text></svg>

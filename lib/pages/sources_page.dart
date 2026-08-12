@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/config_provider.dart';
 import '../providers/core_provider.dart';
 
 /// Sources settings page — manage Qobuz credentials, preferred source, fallback.
@@ -15,6 +16,8 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
   final _appIdController = TextEditingController();
   final _appSecretController = TextEditingController();
   final _authTokenController = TextEditingController();
+  final _soulseekUsernameController = TextEditingController();
+  final _soulseekPasswordController = TextEditingController();
 
   List<Map<String, dynamic>> _sources = [];
   String _preferredSource = '';
@@ -44,6 +47,8 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
     _appIdController.dispose();
     _appSecretController.dispose();
     _authTokenController.dispose();
+    _soulseekUsernameController.dispose();
+    _soulseekPasswordController.dispose();
     super.dispose();
   }
 
@@ -65,6 +70,11 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
       _appIdController.text = configResult['qobuzAppId'] as String? ?? '';
       _appSecretController.text = configResult['qobuzAppSecret'] as String? ?? '';
       _authTokenController.text = configResult['qobuzAuthToken'] as String? ?? '';
+
+      // Pre-populate Soulseek credentials from config
+      final config = ref.read(configProvider).value ?? {};
+      _soulseekUsernameController.text = config['soulseekUsername'] as String? ?? '';
+      _soulseekPasswordController.text = config['soulseekPassword'] as String? ?? '';
     } catch (e) {
       _showError('Failed to load sources: $e');
     }
@@ -103,6 +113,20 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
         'authToken': _authTokenController.text.trim(),
       });
       _showSuccess('Qobuz credentials saved');
+    } catch (e) {
+      _showError('Failed to save credentials: $e');
+    }
+  }
+
+  void _saveSoulseekCredentials() {
+    try {
+      final current = ref.read(configProvider).value ?? {};
+      final updated = Map<String, dynamic>.from(current)
+        ..['soulseekEnabled'] = true
+        ..['soulseekUsername'] = _soulseekUsernameController.text.trim()
+        ..['soulseekPassword'] = _soulseekPasswordController.text.trim();
+      ref.read(configProvider.notifier).save(updated);
+      _showSuccess('Soulseek credentials saved');
     } catch (e) {
       _showError('Failed to save credentials: $e');
     }
@@ -323,6 +347,45 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+
+                // ── Soulseek Credentials ──────────────
+                const _SectionHeader('Soulseek Credentials'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _soulseekUsernameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Username',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _soulseekPasswordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _saveSoulseekCredentials,
+                          icon: const Icon(Icons.save),
+                          label: const Text('Save'),
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],

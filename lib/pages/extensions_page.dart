@@ -19,6 +19,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
   List<String> _sources = [];
   bool _loadingInstalled = true;
   bool _loadingRegistry = false;
+  final Set<String> _installingIds = {};
 
   // Browse tab filters
   String _searchQuery = '';
@@ -64,7 +65,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
     setState(() => _loadingRegistry = true);
     try {
       final core = ref.read(flacCoreProvider);
-      final result = core.callSync('getExtensionRegistry', {'url': ''});
+      final result = await core.callAsync('getExtensionRegistry', {'url': ''});
       final sourcesResult = core.callSync('getExtensionSources');
       setState(() {
         _registry = result['result'] as List<dynamic>? ?? [];
@@ -88,10 +89,11 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
     }
   }
 
-  Future<void> _installExtension(String url) async {
+  Future<void> _installExtension(String id, String url) async {
+    setState(() => _installingIds.add(id));
     try {
       final core = ref.read(flacCoreProvider);
-      core.callSync('installExtension', {'url': url});
+      await core.callAsync('installExtension', {'url': url});
       _loadInstalled();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,6 +106,8 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
           SnackBar(content: Text('Install failed: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _installingIds.remove(id));
     }
   }
 
@@ -533,12 +537,19 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                     isThreeLine: desc.isNotEmpty,
                     trailing: installed
                         ? const Chip(label: Text('Installed'))
-                        : FilledButton(
-                            onPressed: downloadURL.isNotEmpty
-                                ? () => _installExtension(downloadURL)
-                                : null,
-                            child: const Text('Install'),
-                          ),
+                        : _installingIds.contains(id)
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              )
+                            : FilledButton(
+                                onPressed: downloadURL.isNotEmpty
+                                    ? () => _installExtension(id, downloadURL)
+                                    : null,
+                                child: const Text('Install'),
+                              ),
                   ),
                 );
               },

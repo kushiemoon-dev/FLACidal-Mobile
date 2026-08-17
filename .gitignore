@@ -53,3 +53,6 @@ progress*.md
 
 # Dev screenshots
 flutter_*.png
+
+# Git worktrees
+.worktrees/

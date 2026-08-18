@@ -8,7 +8,6 @@ import '../providers/core_provider.dart';
 import 'edit_metadata_page.dart';
 import 'local_album_page.dart';
 
-/// Library page — browse downloaded FLAC files.
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
 
@@ -24,12 +23,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   String _searchQuery = '';
   final _searchController = TextEditingController();
 
-  // Filter state
   String _sourceFilter = 'all'; // all, tidal, qobuz, unknown
   String _qualityFilter = 'all'; // all, standard, hires
   String _formatFilter = 'all'; // all, flac, mp3, opus
 
-  // View mode: tracks or albums
   bool _albumView = false;
 
   @override
@@ -65,15 +62,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final ma = a as Map<String, dynamic>;
       final mb = b as Map<String, dynamic>;
       return switch (_sortBy) {
-        'size' => ((mb['size'] ?? mb['Size'] ?? 0) as int)
-            .compareTo((ma['size'] ?? ma['Size'] ?? 0) as int),
-        'date' => (mb['modTime'] ?? mb['ModTime'] ?? '')
-            .toString()
-            .compareTo((ma['modTime'] ?? ma['ModTime'] ?? '').toString()),
-        _ => (ma['name'] ?? ma['Name'] ?? '')
-            .toString()
-            .toLowerCase()
-            .compareTo((mb['name'] ?? mb['Name'] ?? '').toString().toLowerCase()),
+        'size' => ((mb['size'] ?? mb['Size'] ?? 0) as int).compareTo(
+          (ma['size'] ?? ma['Size'] ?? 0) as int,
+        ),
+        'date' => (mb['modTime'] ?? mb['ModTime'] ?? '').toString().compareTo(
+          (ma['modTime'] ?? ma['ModTime'] ?? '').toString(),
+        ),
+        _ =>
+          (ma['name'] ?? ma['Name'] ?? '').toString().toLowerCase().compareTo(
+            (mb['name'] ?? mb['Name'] ?? '').toString().toLowerCase(),
+          ),
       };
     });
   }
@@ -101,28 +99,35 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey, borderRadius: BorderRadius.circular(2)),
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               Text('Metadata', style: Theme.of(ctx).textTheme.titleLarge),
               const SizedBox(height: 16),
-              ...meta.entries.map((e) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 120,
-                          child: Text(e.key,
-                              style: const TextStyle(fontWeight: FontWeight.bold)),
+              ...meta.entries.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: Text(
+                          e.key,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        Expanded(child: Text(e.value.toString())),
-                      ],
-                    ),
-                  )),
+                      ),
+                      Expanded(child: Text(e.value.toString())),
+                    ],
+                  ),
+                ),
+              ),
               const Divider(height: 32),
               Wrap(
                 spacing: 8,
@@ -186,9 +191,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -200,14 +205,14 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final savedPath = result['result']?['path'] ?? 'unknown';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cover art saved: $savedPath')),
+          SnackBar(content: Text('Saved cover art to $savedPath')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -218,15 +223,15 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final result = core.callSync('saveLyricsToFile', {'path': path});
       final savedPath = result['result']?['path'] ?? 'unknown';
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lyrics saved: $savedPath')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Saved lyrics to $savedPath')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -238,17 +243,17 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final fields = result['result']?['updated_fields'] as List? ?? [];
       if (mounted) {
         final msg = fields.isEmpty
-            ? 'No additional metadata found'
-            : 'Updated: ${fields.join(", ")}';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+            ? 'Nothing new to update'
+            : 'Fields updated: ${fields.join(", ")}';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -286,8 +291,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 max: 320,
                 divisions: 4,
                 label: '${bitrate}k',
-                onChanged: (v) =>
-                    setDialogState(() => bitrate = v.round()),
+                onChanged: (v) => setDialogState(() => bitrate = v.round()),
               ),
             ],
           ),
@@ -311,9 +315,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   Future<void> _convertFile(String path, String format, int bitrate) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Converting...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Converting...')));
     try {
       final core = ref.read(flacCoreProvider);
       core.callSync('convertFiles', {
@@ -325,16 +329,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         },
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conversion complete')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Conversion finished')));
         _loadFiles();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Conversion error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Conversion failed: $e')));
       }
     }
   }
@@ -347,13 +351,17 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete File'),
-        content: Text('Delete "$name"?'),
+        content: Text('Remove "$name"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(ctx).colorScheme.error),
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -366,9 +374,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         _loadFiles();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
         }
       }
     }
@@ -400,9 +408,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               });
             },
             itemBuilder: (_) => [
-              CheckedPopupMenuItem(value: 'name', checked: _sortBy == 'name', child: const Text('Name')),
-              CheckedPopupMenuItem(value: 'date', checked: _sortBy == 'date', child: const Text('Date')),
-              CheckedPopupMenuItem(value: 'size', checked: _sortBy == 'size', child: const Text('Size')),
+              CheckedPopupMenuItem(
+                value: 'name',
+                checked: _sortBy == 'name',
+                child: const Text('Name'),
+              ),
+              CheckedPopupMenuItem(
+                value: 'date',
+                checked: _sortBy == 'date',
+                child: const Text('Date'),
+              ),
+              CheckedPopupMenuItem(
+                value: 'size',
+                checked: _sortBy == 'size',
+                child: const Text('Size'),
+              ),
             ],
           ),
           if (!_albumView)
@@ -412,10 +432,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadFiles,
-        child: _buildBody(),
-      ),
+      body: RefreshIndicator(onRefresh: _loadFiles, child: _buildBody()),
     );
   }
 
@@ -430,7 +447,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
     var filtered = flacFiles;
 
-    // Source filter
     if (_sourceFilter != 'all') {
       filtered = filtered.where((f) {
         final source = (f['source'] ?? 'unknown').toString().toLowerCase();
@@ -438,7 +454,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       }).toList();
     }
 
-    // Quality filter
     if (_qualityFilter != 'all') {
       filtered = filtered.where((f) {
         final quality = (f['quality'] ?? '').toString().toLowerCase();
@@ -450,7 +465,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       }).toList();
     }
 
-    // Format filter
     if (_formatFilter != 'all') {
       filtered = filtered.where((f) {
         final format = (f['format'] ?? 'flac').toString().toLowerCase();
@@ -458,7 +472,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       }).toList();
     }
 
-    // Search filter
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       filtered = filtered.where((f) {
@@ -466,8 +479,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         final title = (f['title'] ?? '').toString().toLowerCase();
         final artist = (f['artist'] ?? '').toString().toLowerCase();
         final album = (f['album'] ?? '').toString().toLowerCase();
-        return name.contains(query) || title.contains(query) ||
-            artist.contains(query) || album.contains(query);
+        return name.contains(query) ||
+            title.contains(query) ||
+            artist.contains(query) ||
+            album.contains(query);
       }).toList();
     }
 
@@ -475,7 +490,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   bool get _hasActiveFilters =>
-      _sourceFilter != 'all' || _qualityFilter != 'all' || _formatFilter != 'all';
+      _sourceFilter != 'all' ||
+      _qualityFilter != 'all' ||
+      _formatFilter != 'all';
 
   Widget _buildFilterChips() {
     return SingleChildScrollView(
@@ -483,27 +500,38 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          // Source filter
           _FilterChipDropdown(
             label: 'Source',
             value: _sourceFilter,
-            options: const {'all': 'All', 'tidal': 'Tidal', 'qobuz': 'Qobuz', 'unknown': 'Unknown'},
+            options: const {
+              'all': 'All',
+              'tidal': 'Tidal',
+              'qobuz': 'Qobuz',
+              'unknown': 'Unknown',
+            },
             onChanged: (v) => setState(() => _sourceFilter = v),
           ),
           const SizedBox(width: 8),
-          // Quality filter
           _FilterChipDropdown(
             label: 'Quality',
             value: _qualityFilter,
-            options: const {'all': 'All', 'standard': '16-bit', 'hires': '24-bit Hi-Res'},
+            options: const {
+              'all': 'All',
+              'standard': '16-bit',
+              'hires': '24-bit Hi-Res',
+            },
             onChanged: (v) => setState(() => _qualityFilter = v),
           ),
           const SizedBox(width: 8),
-          // Format filter
           _FilterChipDropdown(
             label: 'Format',
             value: _formatFilter,
-            options: const {'all': 'All', 'flac': 'FLAC', 'mp3': 'MP3', 'opus': 'Opus'},
+            options: const {
+              'all': 'All',
+              'flac': 'FLAC',
+              'mp3': 'MP3',
+              'opus': 'Opus',
+            },
             onChanged: (v) => setState(() => _formatFilter = v),
           ),
           if (_hasActiveFilters) ...[
@@ -531,19 +559,25 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     final flacFiles = _getFilteredFiles();
 
     if (_files.isEmpty) {
-      return ListView(children: const [
-        SizedBox(height: 120),
-        Center(
-          child: Column(children: [
-            Icon(Icons.library_music, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No downloaded files yet'),
-            SizedBox(height: 8),
-            Text('Download some tracks from the Home page',
-                style: TextStyle(color: Colors.grey)),
-          ]),
-        ),
-      ]);
+      return ListView(
+        children: const [
+          SizedBox(height: 120),
+          Center(
+            child: Column(
+              children: [
+                Icon(Icons.library_music, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text("You haven't downloaded anything yet"),
+                SizedBox(height: 8),
+                Text(
+                  'Head to the Home page to download some tracks',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
     }
 
     return Column(
@@ -553,7 +587,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search library...',
+              hintText: 'Search your library...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -573,9 +607,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         _buildFilterChips(),
         const SizedBox(height: 4),
         if (flacFiles.isEmpty)
-          const Expanded(
-            child: Center(child: Text('No matching files')),
-          )
+          const Expanded(child: Center(child: Text('Nothing matches')))
         else if (_albumView)
           Expanded(child: _buildAlbumView(flacFiles))
         else if (_gridView)
@@ -586,7 +618,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
-  /// Group files by album and display as album cards.
   Widget _buildAlbumView(List<Map<String, dynamic>> flacFiles) {
     final albumGroups = <String, List<Map<String, dynamic>>>{};
     for (final file in flacFiles) {
@@ -618,10 +649,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             final shouldRefresh = await Navigator.push<bool>(
               context,
               MaterialPageRoute(
-                builder: (_) => LocalAlbumPage(
-                  albumName: albumName,
-                  tracks: tracks,
-                ),
+                builder: (_) =>
+                    LocalAlbumPage(albumName: albumName, tracks: tracks),
               ),
             );
             if (shouldRefresh == true) _loadFiles();
@@ -647,7 +676,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
         return ListTile(
           leading: _buildCoverArt(file, size: 40),
-          title: Text(displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
+          title: Text(
+            displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           subtitle: Text(_formatSize(size)),
           tileColor: isPlaying
               ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
@@ -664,10 +697,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                     size: 28,
                     color: isPlaying
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.6),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   onPressed: () {
                     final notifier = ref.read(audioProvider.notifier);
@@ -724,9 +756,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: _buildCoverArt(file, fit: BoxFit.cover),
-                ),
+                Expanded(child: _buildCoverArt(file, fit: BoxFit.cover)),
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: Text(
@@ -744,9 +774,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
-  /// Build a cover art widget. Checks for a companion .jpg alongside the .flac.
-  Widget _buildCoverArt(Map<String, dynamic> file,
-      {double? size, BoxFit fit = BoxFit.cover}) {
+  /// Builds a cover art widget, looking for a companion .jpg next to the .flac.
+  Widget _buildCoverArt(
+    Map<String, dynamic> file, {
+    double? size,
+    BoxFit fit = BoxFit.cover,
+  }) {
     final path = (file['path'] ?? file['Path'] ?? '').toString();
     if (path.isNotEmpty) {
       final jpgPath = '${path.replaceAll(RegExp(r'\.flac$'), '')}.jpg';
@@ -760,7 +793,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         }
         return Image.file(jpgFile, fit: fit);
       }
-      // Also check cover.jpg in same directory
+      // Also look for a cover.jpg in the same directory
       final dirCover = File('${File(path).parent.path}/cover.jpg');
       if (dirCover.existsSync()) {
         if (size != null) {
@@ -773,13 +806,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       }
     }
 
-    // Fallback icon
     if (size != null) {
       return Icon(Icons.audio_file, size: size);
     }
-    return const Center(
-      child: Icon(Icons.album, size: 48, color: Colors.grey),
-    );
+    return const Center(child: Icon(Icons.album, size: 48, color: Colors.grey));
   }
 
   String _formatSize(int bytes) {
@@ -789,7 +819,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 }
 
-/// A dropdown disguised as a filter chip.
+/// A filter chip that's actually a dropdown in disguise.
 class _FilterChipDropdown extends StatelessWidget {
   final String label;
   final String value;
@@ -809,11 +839,13 @@ class _FilterChipDropdown extends StatelessWidget {
     return PopupMenuButton<String>(
       onSelected: onChanged,
       itemBuilder: (_) => options.entries
-          .map((e) => CheckedPopupMenuItem(
-                value: e.key,
-                checked: value == e.key,
-                child: Text(e.value),
-              ))
+          .map(
+            (e) => CheckedPopupMenuItem(
+              value: e.key,
+              checked: value == e.key,
+              child: Text(e.value),
+            ),
+          )
           .toList(),
       child: Chip(
         label: Text(isActive ? '${options[value]}' : label),

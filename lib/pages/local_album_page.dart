@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 
-/// Displays files grouped by album, with disc grouping and track ordering.
 class LocalAlbumPage extends ConsumerStatefulWidget {
   final String albumName;
   final List<Map<String, dynamic>> tracks;
@@ -34,24 +33,20 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
     for (final track in widget.tracks) {
       final path = (track['path'] ?? '').toString();
       if (path.isEmpty) continue;
-      // Check companion .jpg
       final jpgPath = '${path.replaceAll(RegExp(r'\.flac$'), '')}.jpg';
       if (File(jpgPath).existsSync()) return jpgPath;
-      // Check cover.jpg in directory
       final dirCover = '${File(path).parent.path}/cover.jpg';
       if (File(dirCover).existsSync()) return dirCover;
     }
     return null;
   }
 
-  /// Group tracks by disc number, sorted by track number within each disc.
   Map<int, List<Map<String, dynamic>>> _groupByDisc() {
     final grouped = <int, List<Map<String, dynamic>>>{};
     for (final track in widget.tracks) {
       final disc = (track['discNumber'] as num?)?.toInt() ?? 1;
       grouped.putIfAbsent(disc, () => []).add(track);
     }
-    // Sort tracks within each disc by track number
     for (final tracks in grouped.values) {
       tracks.sort((a, b) {
         final aNum = (a['trackNumber'] as num?)?.toInt() ?? 0;
@@ -89,7 +84,7 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Files'),
-        content: Text('Delete ${_selected.length} selected file(s)?'),
+        content: Text('Remove ${_selected.length} selected file(s)?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -121,7 +116,8 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
       _selectionMode = false;
       _selected = {};
     });
-    if (mounted) Navigator.pop(context, true); // Signal refresh
+    if (mounted)
+      Navigator.pop(context, true); // Let the caller know a refresh is needed
   }
 
   @override
@@ -131,21 +127,19 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
     final discGroups = _groupByDisc();
     final multiDisc = discGroups.length > 1;
 
-    // Compute artist from first track
     final artist = widget.tracks.isNotEmpty
         ? (widget.tracks.first['artist'] ?? '').toString()
         : '';
 
-    // Quality info from first track
     final quality = widget.tracks.isNotEmpty
         ? (widget.tracks.first['quality'] ?? '').toString()
         : '';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectionMode
-            ? '${_selected.length} selected'
-            : widget.albumName),
+        title: Text(
+          _selectionMode ? '${_selected.length} selected' : widget.albumName,
+        ),
         actions: [
           if (_selectionMode) ...[
             IconButton(
@@ -176,14 +170,12 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
       ),
       body: CustomScrollView(
         slivers: [
-          // Album header
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cover art
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: SizedBox(
@@ -212,17 +204,19 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
                           const SizedBox(height: 4),
                           Text(
                             artist,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.7),
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: cs.onSurface.withValues(alpha: 0.7),
+                                ),
                           ),
                         ],
                         const SizedBox(height: 4),
                         Text(
                           '${widget.tracks.length} tracks${quality.isNotEmpty ? ' · $quality' : ''}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.5),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                              ),
                         ),
                       ],
                     ),
@@ -231,7 +225,6 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
               ),
             ),
           ),
-          // Track list grouped by disc
           ...discGroups.entries.expand((entry) {
             final discNum = entry.key;
             final tracks = entry.value;
@@ -243,85 +236,92 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                     child: Text(
                       'Disc $discNum',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: cs.primary,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleSmall?.copyWith(color: cs.primary),
                     ),
                   ),
                 ),
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) {
-                    final track = tracks[i];
-                    final globalIndex = widget.tracks.indexOf(track);
-                    final title = (track['title'] ?? track['name'] ?? 'Unknown').toString();
-                    final trackNum = (track['trackNumber'] as num?)?.toInt() ?? (i + 1);
-                    final trackArtist = (track['artist'] ?? '').toString();
-                    final isSelected = _selected.contains(globalIndex);
+                delegate: SliverChildBuilderDelegate((context, i) {
+                  final track = tracks[i];
+                  final globalIndex = widget.tracks.indexOf(track);
+                  final title = (track['title'] ?? track['name'] ?? 'Unknown')
+                      .toString();
+                  final trackNum =
+                      (track['trackNumber'] as num?)?.toInt() ?? (i + 1);
+                  final trackArtist = (track['artist'] ?? '').toString();
+                  final isSelected = _selected.contains(globalIndex);
 
-                    return Material(
-                      color: isSelected
-                          ? cs.primary.withValues(alpha: 0.08)
-                          : Colors.transparent,
-                      child: InkWell(
-                        onTap: _selectionMode
-                            ? () => _toggleSelection(globalIndex)
-                            : null,
-                        onLongPress: !_selectionMode
-                            ? () => _enterSelectionMode(globalIndex)
-                            : null,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 32,
-                                child: Text(
-                                  '$trackNum',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.5),
-                                  ),
-                                ),
+                  return Material(
+                    color: isSelected
+                        ? cs.primary.withValues(alpha: 0.08)
+                        : Colors.transparent,
+                    child: InkWell(
+                      onTap: _selectionMode
+                          ? () => _toggleSelection(globalIndex)
+                          : null,
+                      onLongPress: !_selectionMode
+                          ? () => _enterSelectionMode(globalIndex)
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 32,
+                              child: Text(
+                                '$trackNum',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (trackArtist.isNotEmpty)
                                     Text(
-                                      title,
+                                      trackArtist,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: cs.onSurface.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                          ),
                                     ),
-                                    if (trackArtist.isNotEmpty)
-                                      Text(
-                                        trackArtist,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: cs.onSurface.withValues(alpha: 0.6),
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                                ],
                               ),
-                              if (_selectionMode)
-                                Checkbox(
-                                  value: isSelected,
-                                  onChanged: (_) => _toggleSelection(globalIndex),
-                                ),
-                            ],
-                          ),
+                            ),
+                            if (_selectionMode)
+                              Checkbox(
+                                value: isSelected,
+                                onChanged: (_) => _toggleSelection(globalIndex),
+                              ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                  childCount: tracks.length,
-                ),
+                    ),
+                  );
+                }, childCount: tracks.length),
               ),
             ];
           }),

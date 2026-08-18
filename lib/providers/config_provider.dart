@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core_provider.dart';
 
-/// Provides the current config from Go core.
 final configProvider =
     NotifierProvider<ConfigNotifier, AsyncValue<Map<String, dynamic>>>(
-        ConfigNotifier.new);
+      ConfigNotifier.new,
+    );
 
 class ConfigNotifier extends Notifier<AsyncValue<Map<String, dynamic>>> {
   @override

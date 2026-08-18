@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 
-/// History page — past downloads.
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
 
@@ -40,10 +39,18 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Clear History'),
-        content: const Text('Delete all download history? This cannot be undone.'),
+        content: const Text(
+          "This removes your entire download history — there's no going back.",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Clear')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Clear'),
+          ),
         ],
       ),
     );
@@ -62,15 +69,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           if (_history.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
-              tooltip: 'Clear history',
+              tooltip: 'Wipe history',
               onPressed: _clearHistory,
             ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: _buildBody(),
-      ),
+      body: RefreshIndicator(onRefresh: _load, child: _buildBody()),
     );
   }
 
@@ -86,7 +90,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               children: [
                 Icon(Icons.history, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
-                Text('No download history'),
+                Text('Nothing downloaded yet'),
               ],
             ),
           ),
@@ -108,8 +112,14 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             success ? Icons.check_circle : Icons.error,
             color: success ? Colors.green : Theme.of(context).colorScheme.error,
           ),
-          title: Text(title.toString(), maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text('$artist${date.toString().isNotEmpty ? '\n$date' : ''}'),
+          title: Text(
+            title.toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            '$artist${date.toString().isNotEmpty ? '\n$date' : ''}',
+          ),
           isThreeLine: date.toString().isNotEmpty,
         );
       },

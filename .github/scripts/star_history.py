@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate a self-hosted star-history SVG (no third-party service).
-ponytail: stdlib-only, duplicated per-repo; extract to a shared action if this
-grows beyond a handful of repos.
+"""Build a self-hosted SVG showing star history, skipping any third-party service.
+ponytail note: kept stdlib-only and copied per repo for now; worth pulling into a
+shared action once more than a handful of repos need it.
 """
 import sys, os, json, urllib.request
 from datetime import datetime

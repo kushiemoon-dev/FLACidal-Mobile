@@ -11,7 +11,6 @@ import '../widgets/gradient_header.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
 
-/// Detail page for an album or playlist — shows cover, metadata, track list.
 class ContentDetailPage extends ConsumerStatefulWidget {
   final String type; // "album" or "playlist"
   final String id;
@@ -81,11 +80,10 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
         });
       }
     } catch (_) {
-      // Fallback handled in build — _dominantColor stays null
+      // The build method handles the fallback — _dominantColor is simply left null
     }
   }
 
-  /// Check each track's ISRC against the download history in the background.
   Future<void> _checkDownloadedTracks() async {
     final tracks = _getTracks();
     if (tracks.isEmpty) return;
@@ -114,7 +112,9 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
   void _downloadSelected() {
     final tracks = _getTracks();
     if (tracks.isEmpty || _selected.isEmpty) return;
-    final selected = _selected.map((i) => tracks[i] as Map<String, dynamic>).toList();
+    final selected = _selected
+        .map((i) => tracks[i] as Map<String, dynamic>)
+        .toList();
     final core = ref.read(flacCoreProvider);
     final source = _content?['source'] as String? ?? 'tidal';
     if (source == 'qobuz') {
@@ -125,9 +125,9 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
     } else {
       core.queueDownloads(selected, core.downloadDir);
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Queued ${selected.length} tracks')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${selected.length} tracks queued')));
   }
 
   @override
@@ -136,8 +136,8 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
       body: _loading
           ? const SkeletonLoader(layout: SkeletonLayout.detailHeader)
           : _error != null
-              ? Center(child: Text(_error!))
-              : _buildContent(),
+          ? Center(child: Text(_error!))
+          : _buildContent(),
       floatingActionButton: _content != null && _selected.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -160,10 +160,10 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
 
     return CustomScrollView(
       slivers: [
-        // Cover + info header
         GradientHeader(
           title: title.toString(),
-          subtitle: '${artist.toString().isNotEmpty ? '${artist.toString()} · ' : ''}$trackCount tracks',
+          subtitle:
+              '${artist.toString().isNotEmpty ? '${artist.toString()} · ' : ''}$trackCount tracks',
           coverUrl: coverUrl.toString().isNotEmpty ? coverUrl.toString() : null,
           dominantColor: _dominantColor,
           heroTag: 'content-cover-${widget.type}-${widget.id}',
@@ -185,87 +185,95 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
               ),
             ),
             IconButton(
-              icon: Icon(_selected.length == tracks.length
-                  ? Icons.deselect
-                  : Icons.select_all),
+              icon: Icon(
+                _selected.length == tracks.length
+                    ? Icons.deselect
+                    : Icons.select_all,
+              ),
               onPressed: () {
                 setState(() {
                   if (_selected.length == tracks.length) {
                     _selected = {};
                   } else {
-                    _selected = Set.from(List.generate(tracks.length, (i) => i));
+                    _selected = Set.from(
+                      List.generate(tracks.length, (i) => i),
+                    );
                   }
                 });
               },
             ),
           ],
         ),
-        // Track list
         SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, i) {
-              final track = tracks[i] as Map<String, dynamic>;
-              final trackTitle = track['title'] ?? track['Title'] ?? 'Unknown';
-              final trackArtist = track['artist'] ?? track['Artist'] ?? '';
-              final trackNum = track['trackNumber'] ?? track['TrackNumber'] ?? (i + 1);
-              final duration = ((track['duration'] ?? track['Duration'] ?? 0) as num).toInt();
-              final selected = _selected.contains(i);
-              final isDownloaded = _downloadedIndices.contains(i);
+          delegate: SliverChildBuilderDelegate((context, i) {
+            final track = tracks[i] as Map<String, dynamic>;
+            final trackTitle = track['title'] ?? track['Title'] ?? 'Unknown';
+            final trackArtist = track['artist'] ?? track['Artist'] ?? '';
+            final trackNum =
+                track['trackNumber'] ?? track['TrackNumber'] ?? (i + 1);
+            final duration =
+                ((track['duration'] ?? track['Duration'] ?? 0) as num).toInt();
+            final selected = _selected.contains(i);
+            final isDownloaded = _downloadedIndices.contains(i);
 
-              return Stack(
-                children: [
-                  TrackListTile(
-                    trackNumber: (trackNum as num).toInt(),
-                    title: trackTitle.toString(),
-                    artist: trackArtist.toString(),
-                    duration: duration,
-                    selected: selected,
-                    onTap: () {
-                      setState(() {
-                        _selected = Set.from(_selected);
-                        if (selected) {
-                          _selected.remove(i);
-                        } else {
-                          _selected.add(i);
-                        }
-                      });
-                },
-              ),
-                  if (isDownloaded)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              'In Library',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
+            return Stack(
+              children: [
+                TrackListTile(
+                  trackNumber: (trackNum as num).toInt(),
+                  title: trackTitle.toString(),
+                  artist: trackArtist.toString(),
+                  duration: duration,
+                  selected: selected,
+                  onTap: () {
+                    setState(() {
+                      _selected = Set.from(_selected);
+                      if (selected) {
+                        _selected.remove(i);
+                      } else {
+                        _selected.add(i);
+                      }
+                    });
+                  },
+                ),
+                if (isDownloaded)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'In Library',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 10,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              );
-            },
-            childCount: tracks.length,
-          ),
+                  ),
+              ],
+            );
+          }, childCount: tracks.length),
         ),
         // Bottom padding for FAB
         const SliverPadding(padding: EdgeInsets.only(bottom: 80)),

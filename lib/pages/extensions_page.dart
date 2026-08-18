@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 
-/// Extensions page — browse, install, configure extensions.
 class ExtensionsPage extends ConsumerStatefulWidget {
   const ExtensionsPage({super.key});
 
@@ -21,7 +20,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
   bool _loadingRegistry = false;
   final Set<String> _installingIds = {};
 
-  // Browse tab filters
+  // Filters used on the Browse tab
   String _searchQuery = '';
   String _selectedCategory = 'All';
   final _searchController = TextEditingController();
@@ -83,7 +82,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load registry: $e')),
+          SnackBar(content: Text('Unable to load the registry: $e')),
         );
       }
     }
@@ -96,15 +95,15 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       await core.callAsync('installExtension', {'url': url});
       _loadInstalled();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Extension installed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Extension added')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Install failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Installation failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _installingIds.remove(id));
@@ -116,14 +115,16 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Uninstall Extension'),
-        content: Text('Remove extension "$id"?'),
+        content: Text('Remove the "$id" extension?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Uninstall')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Uninstall'),
+          ),
         ],
       ),
     );
@@ -133,9 +134,9 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
         _loadInstalled();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
         }
       }
     }
@@ -143,14 +144,16 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
 
   Future<void> _toggleEnabled(String id, bool enabled) async {
     try {
-      ref.read(flacCoreProvider)
-          .callSync('enableExtension', {'id': id, 'enabled': enabled});
+      ref.read(flacCoreProvider).callSync('enableExtension', {
+        'id': id,
+        'enabled': enabled,
+      });
       _loadInstalled();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -163,7 +166,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
 
     if (authFields.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No configuration needed')),
+        const SnackBar(content: Text('Nothing to configure here')),
       );
       return;
     }
@@ -173,7 +176,8 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       final f = field as Map<String, dynamic>;
       final key = f['key'] as String? ?? '';
       controllers[key] = TextEditingController(
-          text: currentAuth[key]?.toString() ?? '');
+        text: currentAuth[key]?.toString() ?? '',
+      );
     }
 
     final saved = await showDialog<bool>(
@@ -202,11 +206,13 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Save')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Save'),
+          ),
         ],
       ),
     );
@@ -217,18 +223,20 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
         data[entry.key] = entry.value.text;
       }
       try {
-        ref.read(flacCoreProvider)
-            .callSync('setExtensionAuth', {'id': id, 'data': data});
+        ref.read(flacCoreProvider).callSync('setExtensionAuth', {
+          'id': id,
+          'data': data,
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Configuration saved')),
+            const SnackBar(content: Text('Configuration updated')),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
         }
       }
     }
@@ -254,11 +262,13 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('Add')),
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Add'),
+          ),
         ],
       ),
     );
@@ -266,19 +276,18 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
 
     if (url != null && url.isNotEmpty) {
       try {
-        ref.read(flacCoreProvider)
-            .callSync('addExtensionSource', {'url': url});
+        ref.read(flacCoreProvider).callSync('addExtensionSource', {'url': url});
         setState(() => _sources.add(url));
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Source added')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('New source added')));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
         }
       }
     }
@@ -286,14 +295,15 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
 
   Future<void> _removeSource(String url) async {
     try {
-      ref.read(flacCoreProvider)
-          .callSync('removeExtensionSource', {'url': url});
+      ref.read(flacCoreProvider).callSync('removeExtensionSource', {
+        'url': url,
+      });
       setState(() => _sources.remove(url));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -318,10 +328,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildInstalledTab(),
-          _buildRegistryTab(),
-        ],
+        children: [_buildInstalledTab(), _buildRegistryTab()],
       ),
     );
   }
@@ -338,10 +345,12 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
           children: [
             Icon(Icons.extension, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No extensions installed'),
+            Text('Nothing installed yet'),
             SizedBox(height: 8),
-            Text('Browse the registry to find extensions',
-                style: TextStyle(color: Colors.grey)),
+            Text(
+              'Check the registry to find extensions',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -359,7 +368,8 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
           final version = manifest['version'] as String? ?? '';
           final author = manifest['author'] as String? ?? '';
           final enabled = ext['enabled'] as bool? ?? true;
-          final caps = (manifest['capabilities'] as List<dynamic>?)
+          final caps =
+              (manifest['capabilities'] as List<dynamic>?)
                   ?.map((c) => c.toString())
                   .join(', ') ??
               '';
@@ -398,9 +408,13 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                     },
                     itemBuilder: (_) => const [
                       PopupMenuItem(
-                          value: 'configure', child: Text('Configure')),
+                        value: 'configure',
+                        child: Text('Configure'),
+                      ),
                       PopupMenuItem(
-                          value: 'uninstall', child: Text('Uninstall')),
+                        value: 'uninstall',
+                        child: Text('Uninstall'),
+                      ),
                     ],
                   ),
                 ],
@@ -420,14 +434,10 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       final category = (m['category'] as String? ?? '').toLowerCase();
       final query = _searchQuery.toLowerCase();
 
-      // Search filter
-      if (query.isNotEmpty &&
-          !name.contains(query) &&
-          !desc.contains(query)) {
+      if (query.isNotEmpty && !name.contains(query) && !desc.contains(query)) {
         return false;
       }
 
-      // Category filter
       if (_selectedCategory != 'All' &&
           category != _selectedCategory.toLowerCase()) {
         return false;
@@ -449,7 +459,7 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
           children: [
             const Icon(Icons.cloud_download, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text('No extensions available'),
+            const Text('Nothing available right now'),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: _loadRegistry,
@@ -460,11 +470,12 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       );
     }
 
-    final installedIds =
-        _installed.map((e) {
-          final m = (e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ?? {};
-          return m['id'] as String? ?? '';
-        }).toSet();
+    final installedIds = _installed.map((e) {
+      final m =
+          (e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ??
+          {};
+      return m['id'] as String? ?? '';
+    }).toSet();
 
     final filtered = _filteredRegistry;
 
@@ -472,14 +483,13 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       onRefresh: _loadRegistry,
       child: CustomScrollView(
         slivers: [
-          // Search bar
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search extensions...',
+                  hintText: 'Find extensions...',
                   prefixIcon: const Icon(Icons.search),
                   border: const OutlineInputBorder(),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -496,7 +506,6 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
               ),
             ),
           ),
-          // Category chips
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -507,63 +516,58 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                   return FilterChip(
                     label: Text(cat),
                     selected: selected,
-                    onSelected: (_) =>
-                        setState(() => _selectedCategory = cat),
+                    onSelected: (_) => setState(() => _selectedCategory = cat),
                   );
                 }).toList(),
               ),
             ),
           ),
-          // Extension list
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, i) {
-                final item = filtered[i] as Map<String, dynamic>;
-                final id = item['id'] as String? ?? '';
-                final name = item['name'] as String? ?? id;
-                final desc = item['description'] as String? ?? '';
-                final version = item['latestVersion'] as String? ?? '';
-                final downloadURL = item['downloadURL'] as String? ?? '';
-                final installed = installedIds.contains(id);
+            delegate: SliverChildBuilderDelegate((context, i) {
+              final item = filtered[i] as Map<String, dynamic>;
+              final id = item['id'] as String? ?? '';
+              final name = item['name'] as String? ?? id;
+              final desc = item['description'] as String? ?? '';
+              final version = item['latestVersion'] as String? ?? '';
+              final downloadURL = item['downloadURL'] as String? ?? '';
+              final installed = installedIds.contains(id);
 
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.extension)),
-                    title: Text(name),
-                    subtitle: Text(
-                        '$desc${version.isNotEmpty ? '\nv$version' : ''}'),
-                    isThreeLine: desc.isNotEmpty,
-                    trailing: installed
-                        ? const Chip(label: Text('Installed'))
-                        : _installingIds.contains(id)
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2),
-                              )
-                            : FilledButton(
-                                onPressed: downloadURL.isNotEmpty
-                                    ? () => _installExtension(id, downloadURL)
-                                    : null,
-                                child: const Text('Install'),
-                              ),
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.extension)),
+                  title: Text(name),
+                  subtitle: Text(
+                    '$desc${version.isNotEmpty ? '\nv$version' : ''}',
                   ),
-                );
-              },
-              childCount: filtered.length,
-            ),
+                  isThreeLine: desc.isNotEmpty,
+                  trailing: installed
+                      ? const Chip(label: Text('Installed'))
+                      : _installingIds.contains(id)
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : FilledButton(
+                          onPressed: downloadURL.isNotEmpty
+                              ? () => _installExtension(id, downloadURL)
+                              : null,
+                          child: const Text('Install'),
+                        ),
+                ),
+              );
+            }, childCount: filtered.length),
           ),
-          // Sources section
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
               child: Row(
                 children: [
-                  Text('Sources',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Sources',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.add),
@@ -578,29 +582,27 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Text('No additional sources configured',
-                    style: TextStyle(color: Colors.grey)),
+                child: Text(
+                  'No extra sources set up',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
             ),
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, i) {
-                final url = _sources[i];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  child: ListTile(
-                    leading: const Icon(Icons.source),
-                    title: Text(url, style: const TextStyle(fontSize: 13)),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _removeSource(url),
-                    ),
+            delegate: SliverChildBuilderDelegate((context, i) {
+              final url = _sources[i];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                child: ListTile(
+                  leading: const Icon(Icons.source),
+                  title: Text(url, style: const TextStyle(fontSize: 13)),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => _removeSource(url),
                   ),
-                );
-              },
-              childCount: _sources.length,
-            ),
+                ),
+              );
+            }, childCount: _sources.length),
           ),
           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
         ],

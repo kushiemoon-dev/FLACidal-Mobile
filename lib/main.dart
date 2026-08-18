@@ -17,10 +17,8 @@ import 'router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SharedPreferences for theme persistence
   final prefs = await SharedPreferences.getInstance();
 
-  // Request storage permission for public Music folder
   if (Platform.isAndroid) {
     final status = await Permission.manageExternalStorage.status;
     if (!status.isGranted) {
@@ -28,25 +26,21 @@ void main() async {
     }
   }
 
-  // Initialize Go backend with app's documents directory
   final appDir = await getApplicationDocumentsDirectory();
   try {
     await FlacCore.instance.init(appDir.path);
   } catch (e) {
-    debugPrint('FlacCore init failed: $e');
+    debugPrint('FlacCore failed to initialize: $e');
   }
 
-  // Restore any previously persisted queue (failed jobs from last session)
   try {
     FlacCore.instance.callSync('restoreQueue');
   } catch (e) {
-    debugPrint('Queue restore failed: $e');
+    debugPrint('Failed to restore the queue: $e');
   }
 
-  // Initialize foreground service for background downloads
   await DownloadService.init();
 
-  // Set download dir to public Music folder
   const musicPath = '/storage/emulated/0/Music/FLACidal';
   if (Platform.isAndroid) {
     final musicDir = Directory(musicPath);
@@ -54,7 +48,7 @@ void main() async {
       try {
         musicDir.createSync(recursive: true);
       } catch (e) {
-        debugPrint('Could not create Music dir: $e');
+        debugPrint('Unable to create the Music directory: $e');
       }
     }
     FlacCore.instance.downloadDir = musicPath;
@@ -63,17 +57,14 @@ void main() async {
   }
 
   final container = ProviderContainer(
-    overrides: [
-      sharedPrefsProvider.overrideWithValue(prefs),
-    ],
+    overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
   );
 
-  // Listen for shared URLs from other apps
   if (Platform.isAndroid || Platform.isIOS) {
-    // Handle initial share (app was closed)
-    ReceiveSharingIntent.instance
-        .getInitialMedia()
-        .then((List<SharedMediaFile> files) {
+    // Cover the case where a share arrives while the app is closed
+    ReceiveSharingIntent.instance.getInitialMedia().then((
+      List<SharedMediaFile> files,
+    ) {
       if (files.isNotEmpty) {
         final text = files.first.path;
         if (text.isNotEmpty) {
@@ -83,28 +74,24 @@ void main() async {
       }
     });
 
-    // Handle shares while app is running
-    ReceiveSharingIntent.instance.getMediaStream().listen(
-      (List<SharedMediaFile> files) {
-        if (files.isNotEmpty) {
-          final text = files.first.path;
-          if (text.isNotEmpty) {
-            container.read(sharedUrlProvider.notifier).set(text);
-            appRouter.go('/');
-          }
+    // Cover shares that come in while the app is already running
+    ReceiveSharingIntent.instance.getMediaStream().listen((
+      List<SharedMediaFile> files,
+    ) {
+      if (files.isNotEmpty) {
+        final text = files.first.path;
+        if (text.isNotEmpty) {
+          container.read(sharedUrlProvider.notifier).set(text);
+          appRouter.go('/');
         }
-      },
-    );
+      }
+    });
   }
 
   runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const FlacApp(),
-    ),
+    UncontrolledProviderScope(container: container, child: const FlacApp()),
   );
 }
-
 
 class FlacApp extends ConsumerStatefulWidget {
   const FlacApp({super.key});
@@ -132,7 +119,7 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
       try {
         FlacCore.instance.callSync('persistQueue');
       } catch (e) {
-        debugPrint('Queue persist failed: $e');
+        debugPrint('Failed to persist the queue: $e');
       }
     }
   }

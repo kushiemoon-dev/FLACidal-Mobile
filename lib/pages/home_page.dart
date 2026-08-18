@@ -11,7 +11,6 @@ import '../widgets/cover_art_tile.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
 
-/// Home page — paste a URL, fetch content, select tracks, download.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -29,7 +28,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Check for shared URL after first frame
+    // Look for a shared URL once the first frame has rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final sharedUrl = ref.read(sharedUrlProvider);
       if (sharedUrl != null && sharedUrl.isNotEmpty) {
@@ -66,9 +65,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     try {
-      // For non-native URLs (not Tidal/Qobuz/Deezer/Bandcamp), try resolving via Odesli
+      // URLs that aren't native (Tidal/Qobuz/Deezer/Bandcamp) get resolved through Odesli
       final lower = url.toLowerCase();
-      final isNativeUrl = lower.contains('tidal.com') ||
+      final isNativeUrl =
+          lower.contains('tidal.com') ||
           lower.contains('qobuz.com') ||
           lower.contains('deezer.com') ||
           lower.contains('bandcamp.com');
@@ -79,7 +79,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           _urlController.text = url;
         } else {
           setState(() {
-            _error = 'Could not resolve URL to a supported source';
+            _error = 'Unable to resolve that URL to a supported source';
             _loading = false;
           });
           return;
@@ -92,11 +92,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       setState(() {
         _content = content;
         _loading = false;
-        // Select all tracks by default
         final tracks = _getTracks();
-        _selectedTracks = Set.from(
-          List.generate(tracks.length, (i) => i),
-        );
+        _selectedTracks = Set.from(List.generate(tracks.length, (i) => i));
       });
     } on FlacCoreException catch (e) {
       setState(() {
@@ -113,11 +110,10 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   List<dynamic> _getTracks() {
     if (_content == null) return [];
-    // Content can be a track, album, playlist, or artist
+    // The content might be a track, album, playlist, or artist
     if (_content!.containsKey('tracks')) {
       return _content!['tracks'] as List<dynamic>? ?? [];
     }
-    // Single track
     if (_content!.containsKey('id') && _content!.containsKey('title')) {
       return [_content!];
     }
@@ -147,7 +143,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Queued ${selectedTracks.length} tracks'),
+            content: Text('${selectedTracks.length} tracks queued'),
             action: SnackBarAction(
               label: 'View Queue',
               onPressed: () => context.go('/queue'),
@@ -157,9 +153,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -182,7 +178,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       body: Column(
         children: [
-          // URL Input
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -191,12 +186,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: TextField(
                     controller: _urlController,
                     decoration: InputDecoration(
-                      hintText: 'Paste Tidal, Qobuz, Deezer or Bandcamp URL...',
+                      hintText:
+                          'Drop a Tidal, Qobuz, Deezer, or Bandcamp URL here...',
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.content_paste),
                         onPressed: _pasteFromClipboard,
-                        tooltip: 'Paste from clipboard',
+                        tooltip: 'Fill in from clipboard',
                       ),
                     ),
                     onSubmitted: (_) => _fetchContent(),
@@ -204,10 +200,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: _loading ? null : () {
-                    HapticFeedback.lightImpact();
-                    _fetchContent();
-                  },
+                  onPressed: _loading
+                      ? null
+                      : () {
+                          HapticFeedback.lightImpact();
+                          _fetchContent();
+                        },
                   child: _loading
                       ? const SizedBox(
                           width: 20,
@@ -220,7 +218,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
 
-          // Error
           if (_error != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -239,7 +236,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
 
-          // Content
           if (_loading)
             const Expanded(
               child: SingleChildScrollView(
@@ -254,7 +250,6 @@ class _HomePageState extends ConsumerState<HomePage> {
           else if (_content != null) ...[
             _buildContentHeader(),
             const Divider(),
-            // Track list
             Expanded(child: _buildTrackList()),
           ] else if (_error == null)
             const Expanded(
@@ -264,14 +259,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                   children: [
                     Icon(Icons.music_note, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
-                    Text('Paste a Tidal, Qobuz, Deezer or Bandcamp URL to get started'),
+                    Text(
+                      'Get started by pasting a Tidal, Qobuz, Deezer, or Bandcamp URL',
+                    ),
                   ],
                 ),
               ),
             ),
         ],
       ),
-      // Download FAB
       floatingActionButton: _content != null && _selectedTracks.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -295,31 +291,34 @@ class _HomePageState extends ConsumerState<HomePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Cover art
           CoverArtTile(
             imageUrl: coverUrl.isNotEmpty ? coverUrl : null,
             size: 80,
             borderRadius: 8,
           ),
           const SizedBox(width: 12),
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title.toString(),
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  title.toString(),
+                  style: Theme.of(context).textTheme.titleMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (artist.toString().isNotEmpty)
-                  Text(artist.toString(),
-                      style: Theme.of(context).textTheme.bodyMedium),
-                Text('${tracks.length} tracks',
-                    style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    artist.toString(),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                Text(
+                  '${tracks.length} tracks',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
-          // Select all / none
           IconButton(
             icon: Icon(
               _selectedTracks.length == tracks.length
@@ -355,8 +354,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         final track = tracks[index] as Map<String, dynamic>;
         final title = track['title'] ?? track['Title'] ?? 'Unknown';
         final artist = track['artist'] ?? track['Artist'] ?? '';
-        final trackNum = track['trackNumber'] ?? track['TrackNumber'] ?? (index + 1);
-        final duration = ((track['duration'] ?? track['Duration'] ?? 0) as num).toInt();
+        final trackNum =
+            track['trackNumber'] ?? track['TrackNumber'] ?? (index + 1);
+        final duration = ((track['duration'] ?? track['Duration'] ?? 0) as num)
+            .toInt();
         final selected = _selectedTracks.contains(index);
 
         return TrackListTile(
@@ -378,5 +379,4 @@ class _HomePageState extends ConsumerState<HomePage> {
       },
     );
   }
-
 }

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 
-/// Full-screen page for editing FLAC file metadata.
 class EditMetadataPage extends ConsumerStatefulWidget {
   final String filePath;
   final Map<String, dynamic> initialMetadata;
@@ -54,8 +53,7 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
     _comment = TextEditingController(text: _str(m, 'comment'));
   }
 
-  String _str(Map<String, dynamic> m, String key) =>
-      (m[key] ?? '').toString();
+  String _str(Map<String, dynamic> m, String key) => (m[key] ?? '').toString();
 
   @override
   void dispose() {
@@ -100,16 +98,16 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
         },
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Metadata saved')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Metadata updated')));
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -125,14 +123,14 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       final savedPath = result['result']?['path'] ?? 'unknown';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cover art saved: $savedPath')),
+          SnackBar(content: Text('Saved cover art to $savedPath')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -145,15 +143,15 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       });
       final savedPath = result['result']?['path'] ?? 'unknown';
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lyrics saved: $savedPath')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Saved lyrics to $savedPath')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -167,17 +165,17 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       final fields = result['result']?['updated_fields'] as List? ?? [];
       if (mounted) {
         final msg = fields.isEmpty
-            ? 'No additional metadata found'
-            : 'Updated: ${fields.join(", ")}';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+            ? 'Nothing new to update'
+            : 'Fields updated: ${fields.join(", ")}';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -192,7 +190,8 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
             const Padding(
               padding: EdgeInsets.all(16),
               child: SizedBox(
-                width: 20, height: 20,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
@@ -207,7 +206,6 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Action buttons
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -236,11 +234,21 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
           _field('Album Artist', _albumArtist),
           Row(
             children: [
-              Expanded(child: _field('Track #', _trackNumber,
-                  keyboardType: TextInputType.number)),
+              Expanded(
+                child: _field(
+                  'Track #',
+                  _trackNumber,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: _field('Disc #', _discNumber,
-                  keyboardType: TextInputType.number)),
+              Expanded(
+                child: _field(
+                  'Disc #',
+                  _discNumber,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
             ],
           ),
           _field('Year', _year, keyboardType: TextInputType.number),
@@ -255,8 +263,12 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
     );
   }
 
-  Widget _field(String label, TextEditingController controller,
-      {TextInputType? keyboardType, int maxLines = 1}) {
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(

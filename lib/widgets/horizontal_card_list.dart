@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Horizontal scrolling card list with section header.
-///
-/// Good for album recommendations, artist discography, related content, etc.
 class HorizontalCardList extends StatelessWidget {
   final String title;
   final VoidCallback? onSeeAll;
@@ -37,9 +34,7 @@ class HorizontalCardList extends StatelessWidget {
             itemCount: itemCount,
             itemBuilder: (context, index) {
               return Padding(
-                padding: EdgeInsets.only(
-                  right: index < itemCount - 1 ? 12 : 0,
-                ),
+                padding: EdgeInsets.only(right: index < itemCount - 1 ? 12 : 0),
                 child: SizedBox(
                   width: cardWidth,
                   child: itemBuilder(context, index),
@@ -60,15 +55,12 @@ class HorizontalCardList extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           if (onSeeAll != null)
-            TextButton(
-              onPressed: onSeeAll,
-              child: const Text('See All'),
-            ),
+            TextButton(onPressed: onSeeAll, child: const Text('View All')),
         ],
       ),
     );

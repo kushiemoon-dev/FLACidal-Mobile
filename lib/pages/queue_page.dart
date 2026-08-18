@@ -31,14 +31,12 @@ class QueuePage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Stats bar
           queueStatus.when(
             data: (status) => _StatsBar(status: status),
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
           const Divider(height: 1),
-          // Track list
           Expanded(child: _TrackList(tracks: tracks)),
         ],
       ),
@@ -109,11 +107,13 @@ class _Stat extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value,
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(color: color, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
@@ -133,7 +133,7 @@ class _TrackList extends StatelessWidget {
           children: [
             Icon(Icons.download_done, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No active downloads'),
+            Text('Nothing is downloading right now'),
           ],
         ),
       );
@@ -149,12 +149,12 @@ class _TrackList extends StatelessWidget {
         final result = payload['result'] as Map<String, dynamic>?;
         final status = payload['status'] as String? ?? 'queued';
         final progress = (payload['progress'] as num?)?.toDouble() ?? 0.0;
-        final title = result?['title'] as String? ??
+        final title =
+            result?['title'] as String? ??
             result?['Title'] as String? ??
             'Track ${entries[i].key}';
-        final artist = result?['artist'] as String? ??
-            result?['Artist'] as String? ??
-            '';
+        final artist =
+            result?['artist'] as String? ?? result?['Artist'] as String? ?? '';
         final errorMsg = result?['error'] as String? ?? '';
         final bytesDownloaded =
             (payload['bytesDownloaded'] as num?)?.toInt() ?? 0;
@@ -200,11 +200,15 @@ class _TrackTile extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget? subtitle;
     if (errorMsg.isNotEmpty) {
-      subtitle = Text(errorMsg,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-              color: Theme.of(context).colorScheme.error, fontSize: 11));
+      subtitle = Text(
+        errorMsg,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.error,
+          fontSize: 11,
+        ),
+      );
     } else if (status == 'downloading' && speed > 0 && bytesTotal > 0) {
       final remaining = bytesTotal - bytesDownloaded;
       subtitle = Text(
@@ -216,10 +220,7 @@ class _TrackTile extends StatelessWidget {
     }
 
     return ListTile(
-      leading: CircularDownloadIndicator(
-        progress: progress,
-        status: status,
-      ),
+      leading: CircularDownloadIndicator(progress: progress, status: status),
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: subtitle,
     );

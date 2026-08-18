@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/config_provider.dart';
 import '../providers/core_provider.dart';
 
-/// Sources settings page — manage Qobuz credentials, preferred source, fallback.
 class SourcesPage extends ConsumerStatefulWidget {
   const SourcesPage({super.key});
 
@@ -24,7 +23,13 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
   bool _fallbackEnabled = false;
   bool _loading = true;
 
-  List<String> _sourceOrder = ['soulseek', 'tidal', 'qobuz', 'amazon', 'bandcamp'];
+  List<String> _sourceOrder = [
+    'soulseek',
+    'tidal',
+    'qobuz',
+    'amazon',
+    'bandcamp',
+  ];
   bool _sourceOrderLoaded = false;
 
   static const _sourceLabels = <String, String>{
@@ -65,18 +70,20 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
       _preferredSource = prefResult['source'] as String? ?? '';
       _fallbackEnabled = prefResult['fallback'] as bool? ?? false;
 
-      // Pre-populate Qobuz credentials from config
       final configResult = core.callSync('getConfig');
       _appIdController.text = configResult['qobuzAppId'] as String? ?? '';
-      _appSecretController.text = configResult['qobuzAppSecret'] as String? ?? '';
-      _authTokenController.text = configResult['qobuzAuthToken'] as String? ?? '';
+      _appSecretController.text =
+          configResult['qobuzAppSecret'] as String? ?? '';
+      _authTokenController.text =
+          configResult['qobuzAuthToken'] as String? ?? '';
 
-      // Pre-populate Soulseek credentials from config
       final config = ref.read(configProvider).value ?? {};
-      _soulseekUsernameController.text = config['soulseekUsername'] as String? ?? '';
-      _soulseekPasswordController.text = config['soulseekPassword'] as String? ?? '';
+      _soulseekUsernameController.text =
+          config['soulseekUsername'] as String? ?? '';
+      _soulseekPasswordController.text =
+          config['soulseekPassword'] as String? ?? '';
     } catch (e) {
-      _showError('Failed to load sources: $e');
+      _showError('Could not load sources: $e');
     }
     setState(() => _loading = false);
   }
@@ -87,7 +94,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
       core.callSync('setPreferredSource', {'source': source});
       setState(() => _preferredSource = source);
     } catch (e) {
-      _showError('Failed to set preferred source: $e');
+      _showError('Could not set the preferred source: $e');
     }
   }
 
@@ -100,7 +107,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
       });
       setState(() => _fallbackEnabled = value);
     } catch (e) {
-      _showError('Failed to update fallback setting: $e');
+      _showError('Could not update the fallback setting: $e');
     }
   }
 
@@ -112,9 +119,9 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
         'appSecret': _appSecretController.text.trim(),
         'authToken': _authTokenController.text.trim(),
       });
-      _showSuccess('Qobuz credentials saved');
+      _showSuccess('Qobuz credentials updated');
     } catch (e) {
-      _showError('Failed to save credentials: $e');
+      _showError('Could not save credentials: $e');
     }
   }
 
@@ -126,9 +133,9 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
         ..['soulseekUsername'] = _soulseekUsernameController.text.trim()
         ..['soulseekPassword'] = _soulseekPasswordController.text.trim();
       ref.read(configProvider.notifier).save(updated);
-      _showSuccess('Soulseek credentials saved');
+      _showSuccess('Soulseek credentials updated');
     } catch (e) {
-      _showError('Failed to save credentials: $e');
+      _showError('Could not save credentials: $e');
     }
   }
 
@@ -139,13 +146,13 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
       final inner = result['result'] as Map<String, dynamic>? ?? {};
       final ok = inner['success'] as bool? ?? false;
       if (ok) {
-        _showSuccess('Connection successful');
+        _showSuccess('Connected successfully');
       } else {
-        final msg = inner['error'] as String? ?? 'Unknown error';
-        _showError('Connection failed: $msg');
+        final msg = inner['error'] as String? ?? 'Unspecified error';
+        _showError('Could not connect: $msg');
       }
     } catch (e) {
-      _showError('Connection test failed: $e');
+      _showError('The connection test failed: $e');
     }
   }
 
@@ -161,7 +168,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
         });
       }
     } catch (_) {
-      // Non-fatal: keep default order
+      // Not fatal — fall back to the default order
       setState(() => _sourceOrderLoaded = true);
     }
   }
@@ -171,7 +178,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
     try {
       core.callSync('setSourceOrder', {'order': order});
     } catch (e) {
-      _showError('Failed to save source order: $e');
+      _showError('Could not save the source order: $e');
     }
   }
 
@@ -184,9 +191,9 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
 
   void _showSuccess(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -197,7 +204,6 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
-                // ── Source Priority ──────────────────
                 const _SectionHeader('Source Priority'),
                 if (!_sourceOrderLoaded)
                   const Padding(
@@ -206,7 +212,10 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                   )
                 else
                   Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     child: ReorderableListView(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -235,12 +244,11 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                     ),
                   ),
 
-                // ── Available Sources ────────────────
                 const _SectionHeader('Available Sources'),
                 if (_sources.isEmpty)
                   const ListTile(
                     leading: Icon(Icons.info_outline),
-                    title: Text('No sources available'),
+                    title: Text('No sources found'),
                   ),
                 for (final source in _sources)
                   ListTile(
@@ -256,15 +264,14 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                     subtitle: Text(source['status'] as String? ?? ''),
                   ),
 
-                // ── Preferred Source ─────────────────
                 const _SectionHeader('Preferred Source'),
                 if (_sources.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: DropdownButtonFormField<String>(
-                      value: _preferredSource.isNotEmpty &&
-                              _sources.any((s) =>
-                                  s['name'] == _preferredSource)
+                      value:
+                          _preferredSource.isNotEmpty &&
+                              _sources.any((s) => s['name'] == _preferredSource)
                           ? _preferredSource
                           : null,
                       decoration: const InputDecoration(
@@ -272,10 +279,12 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                         border: OutlineInputBorder(),
                       ),
                       items: _sources
-                          .map((s) => DropdownMenuItem(
-                                value: s['name'] as String?,
-                                child: Text(s['name'] as String? ?? ''),
-                              ))
+                          .map(
+                            (s) => DropdownMenuItem(
+                              value: s['name'] as String?,
+                              child: Text(s['name'] as String? ?? ''),
+                            ),
+                          )
                           .toList(),
                       onChanged: (value) {
                         if (value != null) _setPreferredSource(value);
@@ -283,18 +292,17 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                     ),
                   ),
 
-                // ── Source Fallback ───────────────────
                 const _SectionHeader('Fallback'),
                 SwitchListTile(
                   secondary: const Icon(Icons.swap_horiz),
                   title: const Text('Source fallback'),
-                  subtitle:
-                      const Text('If primary fails, try secondary'),
+                  subtitle: const Text(
+                    'Falls back to the secondary source if the primary one fails',
+                  ),
                   value: _fallbackEnabled,
                   onChanged: _toggleFallback,
                 ),
 
-                // ── Qobuz Credentials ────────────────
                 const _SectionHeader('Qobuz Credentials'),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -353,7 +361,6 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
                   ),
                 ),
 
-                // ── Soulseek Credentials ──────────────
                 const _SectionHeader('Soulseek Credentials'),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -408,9 +415,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

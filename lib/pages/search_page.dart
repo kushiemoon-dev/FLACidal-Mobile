@@ -11,6 +11,7 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
 
 enum _SearchService { all, tidal, qobuz, deezer }
+
 enum _SortMode { relevance, dateDesc, az, za }
 
 class SearchPage extends ConsumerStatefulWidget {
@@ -122,11 +123,17 @@ class _SearchPageState extends ConsumerState<SearchPage>
           final qobuzTracks = results[0]['result'] as List<dynamic>? ?? [];
           tracks = [...tracks, ...qobuzTracks];
           if (!_songsOnly && results.length > 2) {
-            albums = [...albums, ...(results[1]['result'] as List<dynamic>? ?? [])];
-            artists = [...artists, ...(results[2]['result'] as List<dynamic>? ?? [])];
+            albums = [
+              ...albums,
+              ...(results[1]['result'] as List<dynamic>? ?? []),
+            ];
+            artists = [
+              ...artists,
+              ...(results[2]['result'] as List<dynamic>? ?? []),
+            ];
           }
         } on FlacCoreException {
-          // Qobuz not configured — silently skip if searching "all"
+          // Qobuz isn't configured — quietly skip it unless "all" is being searched
           if (_service == _SearchService.qobuz) rethrow;
         }
       }
@@ -151,25 +158,35 @@ class _SearchPageState extends ConsumerState<SearchPage>
   }
 
   void _applySorting() {
-    if (_sortMode == _SortMode.relevance) return; // Keep original order
+    if (_sortMode == _SortMode.relevance) return; // Leave the order as-is
     int Function(dynamic, dynamic) comparator;
     switch (_sortMode) {
       case _SortMode.az:
         comparator = (a, b) {
-          final aTitle = ((a as Map)['title'] ?? (a)['Title'] ?? '').toString().toLowerCase();
-          final bTitle = ((b as Map)['title'] ?? (b)['Title'] ?? '').toString().toLowerCase();
+          final aTitle = ((a as Map)['title'] ?? (a)['Title'] ?? '')
+              .toString()
+              .toLowerCase();
+          final bTitle = ((b as Map)['title'] ?? (b)['Title'] ?? '')
+              .toString()
+              .toLowerCase();
           return aTitle.compareTo(bTitle);
         };
       case _SortMode.za:
         comparator = (a, b) {
-          final aTitle = ((a as Map)['title'] ?? (a)['Title'] ?? '').toString().toLowerCase();
-          final bTitle = ((b as Map)['title'] ?? (b)['Title'] ?? '').toString().toLowerCase();
+          final aTitle = ((a as Map)['title'] ?? (a)['Title'] ?? '')
+              .toString()
+              .toLowerCase();
+          final bTitle = ((b as Map)['title'] ?? (b)['Title'] ?? '')
+              .toString()
+              .toLowerCase();
           return bTitle.compareTo(aTitle);
         };
       case _SortMode.dateDesc:
         comparator = (a, b) {
-          final aDate = ((a as Map)['releaseDate'] ?? (a)['ReleaseDate'] ?? '').toString();
-          final bDate = ((b as Map)['releaseDate'] ?? (b)['ReleaseDate'] ?? '').toString();
+          final aDate = ((a as Map)['releaseDate'] ?? (a)['ReleaseDate'] ?? '')
+              .toString();
+          final bDate = ((b as Map)['releaseDate'] ?? (b)['ReleaseDate'] ?? '')
+              .toString();
           return bDate.compareTo(aDate);
         };
       case _SortMode.relevance:
@@ -189,7 +206,8 @@ class _SearchPageState extends ConsumerState<SearchPage>
       _SearchService.qobuz => 'Qobuz',
       _SearchService.deezer => 'Deezer',
     };
-    final hintText = 'Search${hintService.isNotEmpty ? ' $hintService' : ''}...';
+    final hintText =
+        'Search${hintService.isNotEmpty ? ' $hintService' : ''}...';
 
     return Scaffold(
       appBar: AppBar(
@@ -225,65 +243,79 @@ class _SearchPageState extends ConsumerState<SearchPage>
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                  children: [
-                    ..._SearchService.values.map((s) {
-                      final label = switch (s) {
-                        _SearchService.all => 'All',
-                        _SearchService.tidal => 'Tidal',
-                        _SearchService.qobuz => 'Qobuz',
-                        _SearchService.deezer => 'Deezer',
-                      };
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ChoiceChip(
-                          label: Text(label),
-                          selected: _service == s,
-                          onSelected: (_) {
-                            setState(() => _service = s);
-                            if (_searchController.text.trim().isNotEmpty) _search();
-                          },
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      );
-                    }),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Songs only'),
-                      selected: _songsOnly,
-                      onSelected: (v) {
-                        setState(() => _songsOnly = v);
-                        if (_searchController.text.trim().isNotEmpty) _search();
-                      },
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    if (_hasResults) ...[
+                    children: [
+                      ..._SearchService.values.map((s) {
+                        final label = switch (s) {
+                          _SearchService.all => 'All',
+                          _SearchService.tidal => 'Tidal',
+                          _SearchService.qobuz => 'Qobuz',
+                          _SearchService.deezer => 'Deezer',
+                        };
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ChoiceChip(
+                            label: Text(label),
+                            selected: _service == s,
+                            onSelected: (_) {
+                              setState(() => _service = s);
+                              if (_searchController.text.trim().isNotEmpty)
+                                _search();
+                            },
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        );
+                      }),
                       const SizedBox(width: 8),
-                      PopupMenuButton<_SortMode>(
+                      FilterChip(
+                        label: const Text('Songs only'),
+                        selected: _songsOnly,
                         onSelected: (v) {
-                          setState(() {
-                            _sortMode = v;
-                            _applySorting();
-                          });
+                          setState(() => _songsOnly = v);
+                          if (_searchController.text.trim().isNotEmpty)
+                            _search();
                         },
-                        itemBuilder: (_) => const [
-                          CheckedPopupMenuItem(value: _SortMode.relevance, child: Text('Relevance')),
-                          CheckedPopupMenuItem(value: _SortMode.dateDesc, child: Text('Date')),
-                          CheckedPopupMenuItem(value: _SortMode.az, child: Text('A-Z')),
-                          CheckedPopupMenuItem(value: _SortMode.za, child: Text('Z-A')),
-                        ],
-                        child: Chip(
-                          avatar: const Icon(Icons.sort, size: 16),
-                          label: Text(switch (_sortMode) {
-                            _SortMode.relevance => 'Relevance',
-                            _SortMode.dateDesc => 'Date',
-                            _SortMode.az => 'A-Z',
-                            _SortMode.za => 'Z-A',
-                          }),
-                          visualDensity: VisualDensity.compact,
-                        ),
+                        visualDensity: VisualDensity.compact,
                       ),
+                      if (_hasResults) ...[
+                        const SizedBox(width: 8),
+                        PopupMenuButton<_SortMode>(
+                          onSelected: (v) {
+                            setState(() {
+                              _sortMode = v;
+                              _applySorting();
+                            });
+                          },
+                          itemBuilder: (_) => const [
+                            CheckedPopupMenuItem(
+                              value: _SortMode.relevance,
+                              child: Text('Relevance'),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: _SortMode.dateDesc,
+                              child: Text('Date'),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: _SortMode.az,
+                              child: Text('A-Z'),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: _SortMode.za,
+                              child: Text('Z-A'),
+                            ),
+                          ],
+                          child: Chip(
+                            avatar: const Icon(Icons.sort, size: 16),
+                            label: Text(switch (_sortMode) {
+                              _SortMode.relevance => 'Relevance',
+                              _SortMode.dateDesc => 'Date',
+                              _SortMode.az => 'A-Z',
+                              _SortMode.za => 'Z-A',
+                            }),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
                   ),
                 ),
               ),
@@ -312,14 +344,19 @@ class _SearchPageState extends ConsumerState<SearchPage>
       _deezerResults.isNotEmpty;
 
   Widget _buildBody() {
-    if (_loading) return const SkeletonLoader(layout: SkeletonLayout.searchResults);
+    if (_loading)
+      return const SkeletonLoader(layout: SkeletonLayout.searchResults);
 
     if (_error != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(height: 8),
             Text(_error!),
           ],
@@ -334,7 +371,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
           children: [
             Icon(Icons.search, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Search for tracks, albums, or artists'),
+            Text('Look up tracks, albums, or artists'),
           ],
         ),
       );
@@ -382,9 +419,9 @@ class _TrackResults extends StatelessWidget {
             } else {
               core.queueDownloads([t], core.downloadDir);
             }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Queued: $title')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('$title queued')));
           },
         );
       },
@@ -413,13 +450,21 @@ class _AlbumResults extends StatelessWidget {
 
         return ListTile(
           leading: CoverArtTile(
-            imageUrl: coverUrl.toString().isNotEmpty ? coverUrl.toString() : null,
+            imageUrl: coverUrl.toString().isNotEmpty
+                ? coverUrl.toString()
+                : null,
             size: 48,
             borderRadius: 4,
             heroTag: heroTag,
           ),
-          title: Text(title.toString(), maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text('$artist${year.isNotEmpty ? ' · $year' : ''} · $tracks tracks'),
+          title: Text(
+            title.toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            '$artist${year.isNotEmpty ? ' · $year' : ''} · $tracks tracks',
+          ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
             if (id != null) {
@@ -468,7 +513,7 @@ class _DeezerResults extends StatelessWidget {
           children: [
             Icon(Icons.music_note, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Search via Deezer for universal results'),
+            Text('Search Deezer to find results from anywhere'),
           ],
         ),
       );
@@ -497,7 +542,11 @@ class _DeezerResults extends StatelessWidget {
                   ),
                 )
               : const Icon(Icons.music_note, size: 48),
-          title: Text(title.toString(), maxLines: 1, overflow: TextOverflow.ellipsis),
+          title: Text(
+            title.toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           subtitle: Text(
             '${artist.toString()}${duration > 0 ? ' · ${duration ~/ 60}:${(duration % 60).toString().padLeft(2, '0')}' : ''}',
           ),
@@ -509,16 +558,17 @@ class _DeezerResults extends StatelessWidget {
                     final url = 'https://www.deezer.com/track/$id';
                     final core = ref.read(flacCoreProvider);
                     final content = core.callSync('fetchContent', {'url': url});
-                    final tracks = (content['result']?['tracks'] as List?)
+                    final tracks =
+                        (content['result']?['tracks'] as List?)
                             ?.cast<Map<String, dynamic>>() ??
                         [content['result'] as Map<String, dynamic>? ?? t];
                     core.callSync('queueDownloads', {
                       'tracks': tracks,
                       'outputDir': core.downloadDir,
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Queued: $title')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('$title queued')));
                   },
           ),
         );

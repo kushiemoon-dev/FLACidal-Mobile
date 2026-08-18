@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/flacidal_theme.dart';
 
-/// Reusable SliverAppBar with gradient overlay and optional Hero animation.
-///
-/// Displays a large cover image as background with a gradient fade,
-/// pinned title on scroll, and subtitle in the expanded state.
 class GradientHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -51,7 +47,10 @@ class GradientHeader extends StatelessWidget {
                 right: 16,
                 child: Text(
                   subtitle!,
-                  style: const TextStyle(color: FlacColors.textSecondary, fontSize: 14),
+                  style: const TextStyle(
+                    color: FlacColors.textSecondary,
+                    fontSize: 14,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

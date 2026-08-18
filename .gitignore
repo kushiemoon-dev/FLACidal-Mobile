@@ -56,3 +56,10 @@ flutter_*.png
 
 # Git worktrees
 .worktrees/
+
+# AI session tracking (internal context files, not for repo)
+docs/plans/
+docs/superpowers/
+.agents/
+.claude/
+.superpowers/

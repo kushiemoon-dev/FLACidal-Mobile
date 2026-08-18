@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/flacidal_theme.dart';
 
-/// Per-track circular download progress indicator with status-based
-/// icons, color coding, and smooth animated transitions.
 class CircularDownloadIndicator extends StatelessWidget {
   final double progress; // 0.0 - 1.0
   final String status; // downloading, completed, error, queued
@@ -22,17 +20,12 @@ class CircularDownloadIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: _buildContent(context),
-    );
+    return SizedBox(width: size, height: size, child: _buildContent(context));
   }
 
   Widget _buildContent(BuildContext context) {
     final color = _statusColor(context);
 
-    // Terminal states: icon only, no progress ring
     if (status == 'completed') {
       return _IconIndicator(
         icon: Icons.check_rounded,
@@ -55,7 +48,6 @@ class CircularDownloadIndicator extends StatelessWidget {
       );
     }
 
-    // Downloading: animated circular progress with percentage
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: progress),
       duration: const Duration(milliseconds: 300),
@@ -102,7 +94,6 @@ class CircularDownloadIndicator extends StatelessWidget {
   }
 }
 
-/// Small icon with a subtle circular tinted background.
 class _IconIndicator extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -122,11 +113,7 @@ class _IconIndicator extends StatelessWidget {
         color: color.withValues(alpha: 0.12),
       ),
       child: Center(
-        child: Icon(
-          icon,
-          size: size * 0.5,
-          color: color,
-        ),
+        child: Icon(icon, size: size * 0.5, color: color),
       ),
     );
   }

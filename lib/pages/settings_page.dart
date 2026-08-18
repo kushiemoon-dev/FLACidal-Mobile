@@ -8,7 +8,6 @@ import '../providers/download_options_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/section_header.dart';
 
-/// Settings page — download quality, folder, theme, accent color.
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -47,8 +46,7 @@ class SettingsPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          // ── Download ──────────────────────────
-          SectionHeader(title:'Download'),
+          SectionHeader(title: 'Download'),
           ListTile(
             leading: const Icon(Icons.high_quality),
             title: const Text('Quality'),
@@ -66,16 +64,20 @@ class SettingsPage extends ConsumerWidget {
           SwitchListTile(
             secondary: const Icon(Icons.create_new_folder),
             title: const Text('Organize by folders'),
-            subtitle: const Text('Create Artist/Album subfolders'),
+            subtitle: const Text('Creates subfolders by Artist/Album'),
             value: dlOptions['OrganizeFolders'] as bool? ?? false,
-            onChanged: (v) =>
-                ref.read(downloadOptionsProvider.notifier).update('OrganizeFolders', v),
+            onChanged: (v) => ref
+                .read(downloadOptionsProvider.notifier)
+                .update('OrganizeFolders', v),
           ),
           ListTile(
             leading: const Icon(Icons.account_tree),
             title: const Text('Folder structure'),
-            subtitle: Text(_folderTemplateLabel(
-                dlOptions['FolderTemplate'] as String? ?? '')),
+            subtitle: Text(
+              _folderTemplateLabel(
+                dlOptions['FolderTemplate'] as String? ?? '',
+              ),
+            ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showFolderTemplatePicker(context, ref, dlOptions),
           ),
@@ -83,8 +85,9 @@ class SettingsPage extends ConsumerWidget {
             secondary: const Icon(Icons.image),
             title: const Text('Embed cover art'),
             value: dlOptions['EmbedCover'] as bool? ?? true,
-            onChanged: (v) =>
-                ref.read(downloadOptionsProvider.notifier).update('EmbedCover', v),
+            onChanged: (v) => ref
+                .read(downloadOptionsProvider.notifier)
+                .update('EmbedCover', v),
           ),
           ListTile(
             leading: const Icon(Icons.audio_file),
@@ -94,12 +97,11 @@ class SettingsPage extends ConsumerWidget {
             onTap: () => _showFormatPicker(context, ref, dlOptions),
           ),
 
-          // ── Sources ─────────────────────────────
-          SectionHeader(title:'Sources'),
+          SectionHeader(title: 'Sources'),
           ListTile(
             leading: const Icon(Icons.cloud),
             title: const Text('Music sources'),
-            subtitle: const Text('Tidal, Qobuz configuration'),
+            subtitle: const Text('Configure Tidal and Qobuz'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/sources'),
           ),
@@ -114,20 +116,19 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.extension),
             title: const Text('Extensions'),
-            subtitle: const Text('Browse and install plugins'),
+            subtitle: const Text('Discover and add plugins'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/extensions'),
           ),
           ListTile(
             leading: const Icon(Icons.cloud_sync),
             title: const Text('Extension repositories'),
-            subtitle: const Text('Add custom extension sources'),
+            subtitle: const Text('Add your own extension sources'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showRepoManager(context, ref),
           ),
 
-          // ── History ───────────────────────────
-          SectionHeader(title:'History'),
+          SectionHeader(title: 'History'),
           ListTile(
             leading: const Icon(Icons.history),
             title: const Text('Download history'),
@@ -135,16 +136,24 @@ class SettingsPage extends ConsumerWidget {
             onTap: () => context.push('/history'),
           ),
 
-          // ── Appearance ────────────────────────
-          SectionHeader(title:'Appearance'),
+          SectionHeader(title: 'Appearance'),
           ListTile(
             leading: const Icon(Icons.brightness_6),
             title: const Text('Theme'),
             trailing: SegmentedButton<ThemeMode>(
               segments: const [
-                ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
-                ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode)),
-                ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.settings_brightness)),
+                ButtonSegment(
+                  value: ThemeMode.dark,
+                  icon: Icon(Icons.dark_mode),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.light,
+                  icon: Icon(Icons.light_mode),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.system,
+                  icon: Icon(Icons.settings_brightness),
+                ),
               ],
               selected: {themeMode},
               onSelectionChanged: (v) =>
@@ -161,15 +170,11 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.palette),
             title: const Text('Accent color'),
-            trailing: CircleAvatar(
-              backgroundColor: accentColor,
-              radius: 14,
-            ),
+            trailing: CircleAvatar(backgroundColor: accentColor, radius: 14),
             onTap: () => _showColorPicker(context, ref),
           ),
 
-          // ── About ─────────────────────────────
-          SectionHeader(title:'About'),
+          SectionHeader(title: 'About'),
           const ListTile(
             leading: Icon(Icons.info),
             title: Text('FLACidal Mobile'),
@@ -182,7 +187,7 @@ class SettingsPage extends ConsumerWidget {
 
   Future<void> _pickDownloadFolder(BuildContext context, WidgetRef ref) async {
     final result = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Choose download folder',
+      dialogTitle: 'Pick a download folder',
     );
     if (result != null) {
       ref.read(downloadDirProvider.notifier).set(result);
@@ -209,9 +214,13 @@ class SettingsPage extends ConsumerWidget {
           children: _fonts.map((f) {
             final selected = f == current;
             return ListTile(
-              title: Text(f ?? 'System default',
-                  style: f != null ? TextStyle(fontFamily: f) : null),
-              leading: selected ? const Icon(Icons.check) : const SizedBox(width: 24),
+              title: Text(
+                f ?? 'System default',
+                style: f != null ? TextStyle(fontFamily: f) : null,
+              ),
+              leading: selected
+                  ? const Icon(Icons.check)
+                  : const SizedBox(width: 24),
               onTap: () {
                 ref.read(fontFamilyProvider.notifier).set(f);
                 Navigator.pop(ctx);
@@ -223,21 +232,31 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _showQualityPicker(BuildContext context, WidgetRef ref, Map<String, dynamic> opts) {
+  void _showQualityPicker(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> opts,
+  ) {
     final current = opts['Quality'] as String? ?? 'LOSSLESS';
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: _qualities
-            .map((q) => ListTile(
-                  title: Text(q),
-                  leading: q == current ? const Icon(Icons.check) : const SizedBox(width: 24),
-                  onTap: () {
-                    ref.read(downloadOptionsProvider.notifier).update('Quality', q);
-                    Navigator.pop(ctx);
-                  },
-                ))
+            .map(
+              (q) => ListTile(
+                title: Text(q),
+                leading: q == current
+                    ? const Icon(Icons.check)
+                    : const SizedBox(width: 24),
+                onTap: () {
+                  ref
+                      .read(downloadOptionsProvider.notifier)
+                      .update('Quality', q);
+                  Navigator.pop(ctx);
+                },
+              ),
+            )
             .toList(),
       ),
     );
@@ -278,25 +297,30 @@ class SettingsPage extends ConsumerWidget {
   static const _formats = ['FLAC', 'M4A', 'ALAC'];
 
   void _showFormatPicker(
-      BuildContext context, WidgetRef ref, Map<String, dynamic> opts) {
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> opts,
+  ) {
     final current = opts['DownloadFormat'] as String? ?? 'FLAC';
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: _formats
-            .map((f) => ListTile(
-                  title: Text(f),
-                  leading: f == current
-                      ? const Icon(Icons.check)
-                      : const SizedBox(width: 24),
-                  onTap: () {
-                    ref
-                        .read(downloadOptionsProvider.notifier)
-                        .update('DownloadFormat', f);
-                    Navigator.pop(ctx);
-                  },
-                ))
+            .map(
+              (f) => ListTile(
+                title: Text(f),
+                leading: f == current
+                    ? const Icon(Icons.check)
+                    : const SizedBox(width: 24),
+                onTap: () {
+                  ref
+                      .read(downloadOptionsProvider.notifier)
+                      .update('DownloadFormat', f);
+                  Navigator.pop(ctx);
+                },
+              ),
+            )
             .toList(),
       ),
     );
@@ -305,27 +329,32 @@ class SettingsPage extends ConsumerWidget {
   static const _sources = ['Tidal', 'Qobuz'];
 
   void _showPreferredSourcePicker(
-      BuildContext context, WidgetRef ref, Map<String, dynamic> opts) {
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> opts,
+  ) {
     final current = opts['PreferredSource'] as String? ?? 'Tidal';
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: _sources
-            .map((s) => ListTile(
-                  title: Text(s),
-                  leading: s == current
-                      ? const Icon(Icons.check)
-                      : const SizedBox(width: 24),
-                  onTap: () {
-                    ref
-                        .read(downloadOptionsProvider.notifier)
-                        .update('PreferredSource', s);
-                    final core = ref.read(flacCoreProvider);
-                    core.callSync('setPreferredSource', {'source': s});
-                    Navigator.pop(ctx);
-                  },
-                ))
+            .map(
+              (s) => ListTile(
+                title: Text(s),
+                leading: s == current
+                    ? const Icon(Icons.check)
+                    : const SizedBox(width: 24),
+                onTap: () {
+                  ref
+                      .read(downloadOptionsProvider.notifier)
+                      .update('PreferredSource', s);
+                  final core = ref.read(flacCoreProvider);
+                  core.callSync('setPreferredSource', {'source': s});
+                  Navigator.pop(ctx);
+                },
+              ),
+            )
             .toList(),
       ),
     );
@@ -336,7 +365,7 @@ class SettingsPage extends ConsumerWidget {
     final repos = List<String>.from(
       dlOptions['ExtensionRepos'] as List<dynamic>? ??
           [
-            'https://raw.githubusercontent.com/kushiemoon-dev/flacidal-extensions/main/index.json'
+            'https://raw.githubusercontent.com/kushiemoon-dev/flacidal-extensions/main/index.json',
           ],
     );
 
@@ -361,30 +390,31 @@ class SettingsPage extends ConsumerWidget {
   }
 
   void _showFolderTemplatePicker(
-      BuildContext context, WidgetRef ref, Map<String, dynamic> opts) {
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> opts,
+  ) {
     final current = opts['FolderTemplate'] as String? ?? '';
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
-        children: _folderTemplates
-            .map((entry) {
-              final (label, value) = entry;
-              return ListTile(
-                title: Text(label),
-                subtitle: value.isNotEmpty ? Text(value) : null,
-                leading: value == current
-                    ? const Icon(Icons.check)
-                    : const SizedBox(width: 24),
-                onTap: () {
-                  ref
-                      .read(downloadOptionsProvider.notifier)
-                      .update('FolderTemplate', value);
-                  Navigator.pop(ctx);
-                },
-              );
-            })
-            .toList(),
+        children: _folderTemplates.map((entry) {
+          final (label, value) = entry;
+          return ListTile(
+            title: Text(label),
+            subtitle: value.isNotEmpty ? Text(value) : null,
+            leading: value == current
+                ? const Icon(Icons.check)
+                : const SizedBox(width: 24),
+            onTap: () {
+              ref
+                  .read(downloadOptionsProvider.notifier)
+                  .update('FolderTemplate', value);
+              Navigator.pop(ctx);
+            },
+          );
+        }).toList(),
       ),
     );
   }
@@ -394,10 +424,7 @@ class _RepoManagerDialog extends StatefulWidget {
   final List<String> initialRepos;
   final ValueChanged<List<String>> onSave;
 
-  const _RepoManagerDialog({
-    required this.initialRepos,
-    required this.onSave,
-  });
+  const _RepoManagerDialog({required this.initialRepos, required this.onSave});
 
   @override
   State<_RepoManagerDialog> createState() => _RepoManagerDialogState();
@@ -447,10 +474,7 @@ class _RepoManagerDialogState extends State<_RepoManagerDialog> {
                     onSubmitted: (_) => _addRepo(),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addRepo,
-                ),
+                IconButton(icon: const Icon(Icons.add), onPressed: _addRepo),
               ],
             ),
             const SizedBox(height: 12),

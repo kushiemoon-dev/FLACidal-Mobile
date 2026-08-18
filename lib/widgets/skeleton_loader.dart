@@ -3,33 +3,14 @@ import 'package:shimmer/shimmer.dart';
 
 import '../theme/flacidal_theme.dart';
 
-/// Layout types for skeleton loading placeholders.
-enum SkeletonLayout {
-  /// Track list: circle avatar + two text lines per row.
-  trackList,
+enum SkeletonLayout { trackList, gridView, detailHeader, searchResults }
 
-  /// Grid view: 2x3 grid of square placeholders with text below.
-  gridView,
-
-  /// Detail header: large cover art rectangle + 3 text lines.
-  detailHeader,
-
-  /// Search results: alternating card-style skeletons.
-  searchResults,
-}
-
-/// Multi-layout skeleton loading widget using shimmer.
-///
-/// Pure UI widget with no provider dependencies.
+// Pure UI widget — zero provider dependencies, keep it that way.
 class SkeletonLoader extends StatelessWidget {
   final SkeletonLayout layout;
   final int itemCount;
 
-  const SkeletonLoader({
-    super.key,
-    required this.layout,
-    this.itemCount = 6,
-  });
+  const SkeletonLoader({super.key, required this.layout, this.itemCount = 6});
 
   @override
   Widget build(BuildContext context) {

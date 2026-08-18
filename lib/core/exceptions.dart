@@ -1,4 +1,3 @@
-/// Exception thrown by the FLACidal core bridge.
 class FlacCoreException implements Exception {
   final String code;
   final String message;

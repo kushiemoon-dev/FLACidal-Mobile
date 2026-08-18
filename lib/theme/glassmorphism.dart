@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'flacidal_theme.dart';
 
-/// A frosted-glass container with backdrop blur and translucent fill.
 class GlassmorphicContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
@@ -38,7 +37,6 @@ class GlassmorphicContainer extends StatelessWidget {
   }
 }
 
-/// Shows a modal bottom sheet with glassmorphic styling.
 Future<T?> showGlassBottomSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -46,9 +44,7 @@ Future<T?> showGlassBottomSheet<T>(
   return showModalBottomSheet<T>(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => GlassmorphicContainer(
-      borderRadius: 16,
-      child: builder(ctx),
-    ),
+    builder: (ctx) =>
+        GlassmorphicContainer(borderRadius: 16, child: builder(ctx)),
   );
 }

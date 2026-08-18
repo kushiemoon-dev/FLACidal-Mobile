@@ -7,7 +7,6 @@ import 'package:ffi/ffi.dart';
 import 'exceptions.dart';
 import 'flac_ffi.dart';
 
-/// High-level typed wrapper around the Go FFI bridge.
 class FlacCore {
   static FlacCore? _instance;
   static FlacCore get instance => _instance ??= FlacCore._();
@@ -25,10 +24,8 @@ class FlacCore {
 
   FlacCore._();
 
-  /// Stream of all events from the Go core.
   Stream<Map<String, dynamic>> get events => _eventController.stream;
 
-  /// Stream of download progress events only.
   Stream<Map<String, dynamic>> get downloadEvents =>
       _eventController.stream.where((e) => e['type'] == 'download-progress');
 
@@ -37,19 +34,18 @@ class FlacCore {
   String get downloadDir => _downloadDir;
   set downloadDir(String dir) => _downloadDir = dir;
 
-  /// Initialize the core with the given data directory.
   Future<void> init(String dataDir) async {
     if (_initialized) return;
 
     _ffi = FlacFFI();
 
-    // Set up the event callback
+    // Wire up the event callback
     _nativeCallback = NativeCallable<Void Function(Pointer<Char>)>.listener(
       _onEvent,
     );
     _ffi.flacSetEventCallback(_nativeCallback.nativeFunction);
 
-    // Initialize the core
+    // Bring up the core
     final dataDirPtr = dataDir.toNativeUtf8().cast<Char>();
     final resultPtr = _ffi.flacInit(dataDirPtr);
     calloc.free(dataDirPtr);
@@ -70,7 +66,6 @@ class FlacCore {
     _initialized = true;
   }
 
-  /// Synchronous RPC call.
   Map<String, dynamic> callSync(String method, [Map<String, dynamic>? params]) {
     _ensureInitialized();
 
@@ -89,9 +84,11 @@ class FlacCore {
     return _parseResponse(result);
   }
 
-  /// Async RPC call — runs in a Go goroutine, result via callback.
-  Future<Map<String, dynamic>> callAsync(String method,
-      [Map<String, dynamic>? params]) {
+  /// Makes an async RPC call; it runs in a Go goroutine and the result arrives via callback.
+  Future<Map<String, dynamic>> callAsync(
+    String method, [
+    Map<String, dynamic>? params,
+  ]) {
     _ensureInitialized();
 
     final requestId = _nextRequestId++;
@@ -110,7 +107,6 @@ class FlacCore {
     return completer.future;
   }
 
-  /// Shutdown the core and free resources.
   void shutdown() {
     if (!_initialized) return;
     _ffi.flacShutdown();
@@ -119,8 +115,6 @@ class FlacCore {
     _initialized = false;
     _instance = null;
   }
-
-  // ── Typed convenience methods ────────────────────────────
 
   Map<String, dynamic> getConfig() => callSync('getConfig');
 
@@ -134,8 +128,9 @@ class FlacCore {
       callSync('searchTidal', {'query': query, 'limit': limit});
 
   Map<String, dynamic> queueDownloads(
-          List<Map<String, dynamic>> tracks, String outputDir) =>
-      callSync('queueDownloads', {'tracks': tracks, 'outputDir': outputDir});
+    List<Map<String, dynamic>> tracks,
+    String outputDir,
+  ) => callSync('queueDownloads', {'tracks': tracks, 'outputDir': outputDir});
 
   Map<String, dynamic> queueSingleWithQuality({
     required int trackId,
@@ -144,15 +139,14 @@ class FlacCore {
     required String artist,
     String isrc = '',
     required String quality,
-  }) =>
-      callSync('queueSingleWithQuality', {
-        'trackId': trackId,
-        'outputDir': outputDir,
-        'title': title,
-        'artist': artist,
-        'isrc': isrc,
-        'quality': quality,
-      });
+  }) => callSync('queueSingleWithQuality', {
+    'trackId': trackId,
+    'outputDir': outputDir,
+    'title': title,
+    'artist': artist,
+    'isrc': isrc,
+    'quality': quality,
+  });
 
   Map<String, dynamic> getQueueStatus() => callSync('getQueueStatus');
 
@@ -162,20 +156,18 @@ class FlacCore {
   void cancelDownload(int trackId) =>
       callSync('cancelDownload', {'trackId': trackId});
 
-  // ── Private ──────────────────────────────────────────────
-
   void _ensureInitialized() {
     if (!_initialized) {
       throw const FlacCoreException(
         code: 'NOT_INITIALIZED',
-        message: 'Call init() first',
+        message: 'init() must be called first',
       );
     }
   }
 
   static void _onEvent(Pointer<Char> jsonPtr) {
     final jsonStr = jsonPtr.cast<Utf8>().toDartString();
-    // Free native memory after copying — same allocator as C.CString (malloc).
+    // Native memory is freed once copied — it uses the same allocator as C.CString (malloc).
     FlacCore.instance._ffi.flacFree(jsonPtr);
 
     try {
@@ -193,10 +185,12 @@ class FlacCore {
                 : payload as Map<String, dynamic>;
             if (parsed.containsKey('error') && parsed['error'] != null) {
               final err = parsed['error'] as Map<String, dynamic>;
-              completer.completeError(FlacCoreException(
-                code: err['code'] as String,
-                message: err['message'] as String,
-              ));
+              completer.completeError(
+                FlacCoreException(
+                  code: err['code'] as String,
+                  message: err['message'] as String,
+                ),
+              );
             } else {
               completer.complete(parsed);
             }
@@ -207,9 +201,7 @@ class FlacCore {
       } else {
         core._eventController.add(event);
       }
-    } catch (_) {
-      // Ignore malformed events
-    }
+    } catch (_) {}
   }
 
   Map<String, dynamic> _parseResponse(String jsonStr) {

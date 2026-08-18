@@ -4,7 +4,7 @@
 
 ### FLACidal Mobile
 
-**Download lossless FLAC music from Tidal & Qobuz on your phone**
+**Grab lossless FLAC tracks from Tidal & Qobuz straight onto your phone**
 
 [![GitHub Release](https://img.shields.io/github/v/release/kushiemoon-dev/flacidal-mobile?style=flat-square&color=e5a00d)](https://github.com/kushiemoon-dev/flacidal-mobile/releases/latest)
 [![Stars](https://img.shields.io/github/stars/kushiemoon-dev/flacidal-mobile?style=flat-square&color=a855f7)](https://github.com/kushiemoon-dev/flacidal-mobile/stargazers)
@@ -30,33 +30,33 @@
 
 ## Overview
 
-**FLACidal Mobile** is the mobile companion to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal). Paste a Tidal URL, select tracks, and download Hi-Res or Lossless FLAC files directly to your phone — no account required.
+Think of **FLACidal Mobile** as the on-the-go counterpart to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal): drop in a Tidal URL, pick your tracks, and grab Hi-Res or Lossless FLAC straight onto your device — no account needed.
 
-Built with Flutter for the UI and a shared Go backend via FFI for all download logic.
+The UI runs on Flutter, while a shared Go backend reachable through FFI drives every part of the download pipeline.
 
 ---
 
 ## Features
 
-- **Hi-Res & Lossless** — 24-bit up to 192 kHz from Tidal and Qobuz
-- **Paste & Download** — Paste any Tidal URL (album, playlist, track, artist)
-- **URL Resolution** — Paste links from other platforms, auto-resolve to Tidal via Odesli
-- **Search** — Browse Tidal and Qobuz with provider switcher and result sorting
-- **Real-time Queue** — Download progress with speed, ETA, and per-track percentage
-- **Background Downloads** — Foreground service keeps downloads running when the app is closed
-- **Library** — Album grouping with disc numbers, advanced filters (source, quality, format), "Already in Library" detection
-- **Metadata Editing** — Edit all metadata fields directly from the app (title, artist, album, composer, genre, ISRC, and more)
-- **Cover Art** — Extract and save embedded cover art as standalone .jpg
-- **Lyrics** — Fetch synced and plain lyrics, embed in FLAC, or save as .lrc files
-- **Re-enrich** — Re-fetch and re-embed metadata without re-downloading audio files
-- **Format Conversion** — Convert FLAC to MP3, AAC, or Opus with full metadata preservation
-- **MP3 Tagging** — Full ID3v2 metadata embedding for MP3 files (cover art, lyrics, composer)
-- **Artist Tag Modes** — Joined or split Vorbis ARTIST tags for multi-artist tracks
-- **Singles/Albums Folders** — Automatic folder separation for singles vs albums
-- **Extension System** — Install community extensions for additional music sources
-- **Audio Analysis** — Detect upscaled files with spectrum analysis and confidence scoring
-- **Custom Theme** — Dark theme matching the desktop app, Outfit font, accent colors
-- **Share Intent** — Share a Tidal link from your browser to start downloading instantly
+- **Hi-Res & Lossless** — Up to 24-bit/192 kHz straight from Tidal and Qobuz
+- **Paste & Download** — Drop in any Tidal URL — album, playlist, track, or artist
+- **URL Resolution** — Links from other platforms get auto-resolved to Tidal through Odesli
+- **Search** — Switch providers and sort results while browsing Tidal and Qobuz
+- **Real-time Queue** — Watch download speed, ETA, and per-track percentage live
+- **Background Downloads** — A foreground service keeps transfers going even after you close the app
+- **Library** — Albums grouped by disc number, filterable by source/quality/format, with "Already in Library" flagging
+- **Metadata Editing** — Every field — title, artist, album, composer, genre, ISRC, and more — is editable right in the app
+- **Cover Art** — Pull embedded artwork out and save it as a standalone .jpg
+- **Lyrics** — Grab synced or plain lyrics, embed them in the FLAC, or export as .lrc
+- **Re-enrich** — Refresh and re-embed metadata without touching the audio again
+- **Format Conversion** — Convert FLAC into MP3, AAC, or Opus while keeping all metadata intact
+- **MP3 Tagging** — Complete ID3v2 tagging for MP3, cover art and lyrics and composer included
+- **Artist Tag Modes** — Choose joined or split Vorbis ARTIST tags for multi-artist tracks
+- **Singles/Albums Folders** — Singles and albums land in separate folders automatically
+- **Extension System** — Add community extensions to pull in more music sources
+- **Audio Analysis** — Spot upscaled files via spectrum analysis with a confidence score
+- **Custom Theme** — Matches the desktop app's dark theme, with the Outfit font and accent color options
+- **Share Intent** — Share a Tidal link from your browser and downloading starts right away
 
 ---
 
@@ -68,16 +68,16 @@ Built with Flutter for the UI and a shared Go backend via FFI for all download l
 |----------|------|---------|
 | Android | `FLACidal.apk` | Direct install |
 
-> **iOS:** The codebase supports iOS but there is currently no contributor with an Apple Developer account to handle code signing and IPA distribution. If you'd like to help, see [Contributing](#contributing).
+> **iOS:** iOS is supported by the codebase, but nobody with an Apple Developer account has stepped up yet to handle code signing and IPA distribution. Want to help out? Check [Contributing](#contributing).
 
 ---
 
 ## Usage
 
-1. Open **FLACidal Mobile**
-2. Paste a Tidal URL (or share one from your browser)
-3. Select tracks and tap **Download**
-4. Files are saved to `Music/FLACidal/` on your device
+1. Launch **FLACidal Mobile**
+2. Drop in a Tidal URL (or share one straight from your browser)
+3. Pick your tracks and hit **Download**
+4. Files land in `Music/FLACidal/` on your device
 
 ### Supported Content
 
@@ -104,7 +104,7 @@ flacidal-mobile/         Flutter app
 flacidal-core/           Shared Go backend (compiled as .so/.a)
 ```
 
-The Go backend handles all networking, downloads, metadata, and storage. Flutter handles the UI. Communication is via JSON-RPC over FFI.
+Networking, downloads, metadata, and storage are all handled by the Go backend, while Flutter takes care of the UI — the two talk to each other via JSON-RPC over FFI.
 
 ---
 
@@ -153,25 +153,25 @@ flutter build ipa --no-codesign
 ## FAQ
 
 **Do I need a Tidal account?**
-No. FLACidal handles authentication internally.
+Nope — FLACidal takes care of authentication on its own.
 
 **Where are files saved?**
-`/storage/emulated/0/Music/FLACidal/` on Android. Configurable in Settings.
+On Android, `/storage/emulated/0/Music/FLACidal/` — and it's configurable from Settings.
 
 **Is iOS supported?**
-The codebase compiles for iOS but we don't have a contributor to handle Apple signing yet. You can build locally with `flutter build ipa --no-codesign` and sideload via AltStore/SideStore. Contributors welcome!
+It compiles for iOS already, though Apple signing still needs a contributor. In the meantime you can build it yourself with `flutter build ipa --no-codesign` and sideload through AltStore/SideStore. Contributions are very welcome!
 
 **Does it work in the background?**
-Yes. A foreground service keeps downloads running when the app is minimized.
+It does — a foreground service keeps downloads going while the app sits minimized.
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Areas where help is especially needed:
+Contributions are welcome — here's where extra hands would help most:
 
-- **iOS build & signing** — We need a contributor with an Apple Developer account to set up code signing, TestFlight distribution, and the AltStore source. The Flutter + Go FFI codebase already compiles for iOS.
-- **Bug reports** — Open an issue with steps to reproduce.
+- **iOS build & signing** — Someone with an Apple Developer account is needed to set up code signing, TestFlight distribution, and the AltStore source; the Flutter + Go FFI codebase is already iOS-ready.
+- **Bug reports** — File an issue that includes steps to reproduce.
 
 ---
 
@@ -183,7 +183,7 @@ Contributions are welcome! Areas where help is especially needed:
 
 ## Disclaimer
 
-FLACidal Mobile is intended for **educational and personal use only**. It is not affiliated with, endorsed by, or connected to Tidal, Qobuz, or any other streaming service. You are solely responsible for ensuring your use complies with local laws and the Terms of Service of the platforms involved. The software is provided "as is" without warranty of any kind.
+FLACidal Mobile exists strictly for **personal and educational purposes**. It has no affiliation with, endorsement from, or connection to Tidal, Qobuz, or any other streaming service. Making sure your usage stays within local laws and each platform's Terms of Service is entirely on you. The software is provided "as is" without warranty of any kind.
 
 ---
 
@@ -191,6 +191,6 @@ FLACidal Mobile is intended for **educational and personal use only**. It is not
 
 **MIT License** · [Desktop App](https://github.com/kushiemoon-dev/FLACidal) · [Releases](https://github.com/kushiemoon-dev/flacidal-mobile/releases)
 
-Made with ♥ by [KushieMoon](https://github.com/kushiemoon-dev)
+Built with ♥ by [KushieMoon](https://github.com/kushiemoon-dev)
 
 </div>

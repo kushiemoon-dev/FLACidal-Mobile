@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/flacidal_theme.dart';
 
-/// Rich cover art widget with cached networking, Hero animation,
-/// rounded corners, optional play overlay, and elevation.
 class CoverArtTile extends StatelessWidget {
   final String? imageUrl;
   final double size;
@@ -83,11 +81,7 @@ class CoverArtTile extends StatelessWidget {
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
       color: FlacColors.bgSecondary,
-      child: Icon(
-        Icons.album,
-        size: size * 0.4,
-        color: Colors.grey[600],
-      ),
+      child: Icon(Icons.album, size: size * 0.4, color: Colors.grey[600]),
     );
   }
 

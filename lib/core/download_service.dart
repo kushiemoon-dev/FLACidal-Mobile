@@ -8,7 +8,7 @@ class DownloadService {
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'flacidal_download',
         channelName: 'Downloads',
-        channelDescription: 'FLACidal download progress',
+        channelDescription: 'Progress updates for FLACidal downloads',
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
       ),
@@ -23,10 +23,10 @@ class DownloadService {
   static Future<void> start({required int total}) async {
     if (!_initialized) await init();
 
-    // Soulseek needs a long-lived TCP connection for the whole session —
-    // ask to be exempted from Doze/battery-optimization killing it. Cheap
-    // no-op if already granted; requires REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-    // in AndroidManifest.xml.
+    // A long-lived TCP connection is needed by Soulseek for the entire session,
+    // so we request exemption from Doze/battery-optimization killing it. This is a
+    // cheap no-op when already granted; it depends on REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+    // being declared in AndroidManifest.xml.
     if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
       await FlutterForegroundTask.requestIgnoreBatteryOptimization();
     }
@@ -34,7 +34,7 @@ class DownloadService {
     await FlutterForegroundTask.startService(
       serviceTypes: [ForegroundServiceTypes.dataSync],
       notificationTitle: 'FLACidal',
-      notificationText: 'Downloading $total tracks...',
+      notificationText: 'Grabbing $total tracks...',
     );
   }
 
@@ -45,7 +45,7 @@ class DownloadService {
   }) async {
     await FlutterForegroundTask.updateService(
       notificationTitle: currentTrack ?? 'FLACidal',
-      notificationText: 'Downloaded $completed of $total tracks',
+      notificationText: '$completed of $total tracks downloaded',
     );
   }
 

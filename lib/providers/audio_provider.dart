@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
-/// State for the audio playback provider.
 class AudioState {
   final bool isPlaying;
   final String? currentFile;
@@ -31,7 +30,6 @@ class AudioState {
   }
 }
 
-/// Notifier wrapping just_audio's AudioPlayer with Riverpod.
 class AudioNotifier extends Notifier<AudioState> {
   late final AudioPlayer _player;
 
@@ -69,14 +67,10 @@ class AudioNotifier extends Notifier<AudioState> {
     return const AudioState();
   }
 
-  /// Play a local file. Auto-stops if switching to a different file.
   Future<void> play(String filePath) async {
     if (state.currentFile != filePath) {
       await _player.setFilePath(filePath);
-      state = state.copyWith(
-        currentFile: filePath,
-        position: Duration.zero,
-      );
+      state = state.copyWith(currentFile: filePath, position: Duration.zero);
     }
     await _player.play();
   }
@@ -100,5 +94,6 @@ class AudioNotifier extends Notifier<AudioState> {
   }
 }
 
-final audioProvider =
-    NotifierProvider<AudioNotifier, AudioState>(AudioNotifier.new);
+final audioProvider = NotifierProvider<AudioNotifier, AudioState>(
+  AudioNotifier.new,
+);

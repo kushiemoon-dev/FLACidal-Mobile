@@ -3,18 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 
-/// Lyrics page — fetch and display lyrics for a track, with embed support.
 class LyricsPage extends ConsumerStatefulWidget {
-  /// File path to a FLAC file (optional).
   final String? filePath;
 
-  /// Track title (used when filePath is not provided).
+  /// Track title, used only when filePath isn't given.
   final String? title;
 
-  /// Artist name (used when filePath is not provided).
+  /// Artist name, used only when filePath isn't given.
   final String? artist;
 
-  /// Track duration in seconds (used when filePath is not provided).
+  /// Track duration in seconds, used only when filePath isn't given.
   final int? duration;
 
   const LyricsPage({
@@ -67,9 +65,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
       final Map<String, dynamic> result;
 
       if (widget.filePath != null && widget.filePath!.isNotEmpty) {
-        result = core.callSync('fetchLyricsForFile', {
-          'path': widget.filePath,
-        });
+        result = core.callSync('fetchLyricsForFile', {'path': widget.filePath});
       } else if (widget.title != null && widget.artist != null) {
         result = core.callSync('fetchLyrics', {
           'title': widget.title,
@@ -78,7 +74,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
         });
       } else {
         setState(() {
-          _error = 'No file path or track info provided.';
+          _error = 'Missing both a file path and track info.';
           _loading = false;
         });
         return;
@@ -87,7 +83,8 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
       final data = result['result'] as Map<String, dynamic>? ?? result;
       setState(() {
         _plainLyrics = (data['plainLyrics'] ?? data['plain'] ?? '').toString();
-        _syncedLyrics = (data['syncedLyrics'] ?? data['synced'] ?? '').toString();
+        _syncedLyrics = (data['syncedLyrics'] ?? data['synced'] ?? '')
+            .toString();
         _trackName = (data['trackName'] ?? '').toString();
         _artistName = (data['artistName'] ?? '').toString();
         _source = (data['source'] ?? '').toString();
@@ -105,14 +102,16 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
   Future<void> _embedLyrics() async {
     if (widget.filePath == null || widget.filePath!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No file path — cannot embed lyrics.')),
+        const SnackBar(
+          content: Text("Lyrics can't be embedded without a file path."),
+        ),
       );
       return;
     }
 
     if (_plainLyrics.isEmpty && _syncedLyrics.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No lyrics to embed.')),
+        const SnackBar(content: Text("There's nothing to embed.")),
       );
       return;
     }
@@ -128,15 +127,15 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lyrics embedded successfully.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Lyrics embedded.')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Embed failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to embed lyrics: $e')));
       }
     } finally {
       if (mounted) setState(() => _embedding = false);
@@ -146,25 +145,31 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final displayTitle =
-        _trackName.isNotEmpty ? _trackName : (widget.title ?? 'Lyrics');
-    final displayArtist =
-        _artistName.isNotEmpty ? _artistName : (widget.artist ?? '');
+    final displayTitle = _trackName.isNotEmpty
+        ? _trackName
+        : (widget.title ?? 'Lyrics');
+    final displayArtist = _artistName.isNotEmpty
+        ? _artistName
+        : (widget.artist ?? '');
 
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(displayTitle,
-                style: theme.textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+            Text(
+              displayTitle,
+              style: theme.textTheme.titleMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             if (displayArtist.isNotEmpty)
-              Text(displayArtist,
-                  style: theme.textTheme.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
+              Text(
+                displayArtist,
+                style: theme.textTheme.bodySmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
           ],
         ),
         actions: [
@@ -172,8 +177,10 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Chip(
-                label: Text(_source.toUpperCase(),
-                    style: const TextStyle(fontSize: 10)),
+                label: Text(
+                  _source.toUpperCase(),
+                  style: const TextStyle(fontSize: 10),
+                ),
                 visualDensity: VisualDensity.compact,
               ),
             ),
@@ -182,8 +189,10 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Chip(
                 avatar: const Icon(Icons.music_note, size: 14),
-                label: const Text('Instrumental',
-                    style: TextStyle(fontSize: 10)),
+                label: const Text(
+                  'Instrumental',
+                  style: TextStyle(fontSize: 10),
+                ),
                 visualDensity: VisualDensity.compact,
               ),
             ),
@@ -199,7 +208,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
                   )
                 : IconButton(
                     icon: const Icon(Icons.save_alt),
-                    tooltip: 'Embed lyrics in FLAC',
+                    tooltip: 'Embed lyrics into the FLAC',
                     onPressed: (_plainLyrics.isEmpty && _syncedLyrics.isEmpty)
                         ? null
                         : _embedLyrics,
@@ -229,12 +238,17 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
-              Text(_error!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: theme.colorScheme.error)),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: _fetchLyrics,
@@ -252,12 +266,17 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_instrumental ? Icons.music_note : Icons.lyrics,
-                size: 64, color: Colors.grey),
+            Icon(
+              _instrumental ? Icons.music_note : Icons.lyrics,
+              size: 64,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 16),
-            Text(_instrumental
-                ? 'This track appears to be instrumental.'
-                : 'No lyrics found for this track.'),
+            Text(
+              _instrumental
+                  ? 'This one looks to be instrumental.'
+                  : "Couldn't find lyrics for this track.",
+            ),
             const SizedBox(height: 24),
             if (!_instrumental)
               FilledButton.icon(
@@ -272,18 +291,17 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
 
     return TabBarView(
       controller: _tabController,
-      children: [
-        _buildSyncedTab(theme),
-        _buildPlainTab(theme),
-      ],
+      children: [_buildSyncedTab(theme), _buildPlainTab(theme)],
     );
   }
 
   Widget _buildSyncedTab(ThemeData theme) {
     if (_syncedLyrics.isEmpty) {
       return const Center(
-        child: Text('No synced lyrics available.',
-            style: TextStyle(color: Colors.grey)),
+        child: Text(
+          'No synced lyrics on hand.',
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
 
@@ -322,8 +340,10 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
   Widget _buildPlainTab(ThemeData theme) {
     if (_plainLyrics.isEmpty) {
       return const Center(
-        child: Text('No plain lyrics available.',
-            style: TextStyle(color: Colors.grey)),
+        child: Text(
+          'No plain lyrics on hand.',
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
 
@@ -336,13 +356,17 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
     );
   }
 
-  /// Parse LRC-format synced lyrics into timestamp + text pairs.
+  /// Parses LRC-format synced lyrics into timestamp/text pairs.
   List<_SyncedLine> _parseSyncedLyrics(String raw) {
     final lines = <_SyncedLine>[];
     for (final line in raw.split('\n')) {
-      final match = RegExp(r'^\[(\d{2}:\d{2}\.\d{2,3})\]\s?(.*)$').firstMatch(line);
+      final match = RegExp(
+        r'^\[(\d{2}:\d{2}\.\d{2,3})\]\s?(.*)$',
+      ).firstMatch(line);
       if (match != null) {
-        lines.add(_SyncedLine(timestamp: match.group(1)!, text: match.group(2)!));
+        lines.add(
+          _SyncedLine(timestamp: match.group(1)!, text: match.group(2)!),
+        );
       } else if (line.trim().isNotEmpty) {
         lines.add(_SyncedLine(timestamp: '', text: line.trim()));
       }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/core_provider.dart';
 
-/// CSV import page — pick a CSV, preview matches, queue downloads.
 class CSVImportPage extends ConsumerStatefulWidget {
   const CSVImportPage({super.key});
 
@@ -20,7 +19,12 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
   String? _error;
   List<dynamic>? _results;
 
-  static const _qualities = ['HI_RES_MAX', 'HI_RES_LOSSLESS', 'LOSSLESS', 'HIGH'];
+  static const _qualities = [
+    'HI_RES_MAX',
+    'HI_RES_LOSSLESS',
+    'LOSSLESS',
+    'HIGH',
+  ];
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -72,12 +76,14 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
           final m = r as Map<String, dynamic>;
           return m['matched'] == true && m['track'] != null;
         })
-        .map((r) => (r as Map<String, dynamic>)['track'] as Map<String, dynamic>)
+        .map(
+          (r) => (r as Map<String, dynamic>)['track'] as Map<String, dynamic>,
+        )
         .toList();
 
     if (matched.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No matched tracks to queue')),
+        const SnackBar(content: Text('No tracks matched — nothing to queue')),
       );
       return;
     }
@@ -88,7 +94,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Queued ${matched.length} tracks'),
+            content: Text('${matched.length} tracks queued'),
             action: SnackBarAction(
               label: 'View Queue',
               onPressed: () => context.go('/queue'),
@@ -98,40 +104,41 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final matchedCount = _results?.where((r) {
-      return (r as Map<String, dynamic>)['matched'] == true;
-    }).length ?? 0;
+    final matchedCount =
+        _results?.where((r) {
+          return (r as Map<String, dynamic>)['matched'] == true;
+        }).length ??
+        0;
     final totalCount = _results?.length ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Import CSV'),
-      ),
+      appBar: AppBar(title: const Text('Import CSV')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // File picker
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Select CSV file',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Pick a CSV file',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Supports CSV with columns: Track Name, Artist Name(s), '
-                    'Album Name, ISRC. Also supports Spotify export format.',
+                    'CSV files need these columns: Track Name, Artist Name(s), '
+                    "Album Name, ISRC — Spotify's export format works too.",
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -158,14 +165,15 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
             ),
           ),
           const SizedBox(height: 12),
-          // Quality picker
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Text('Quality',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Quality',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const Spacer(),
                   DropdownButton<String>(
                     value: _quality,
@@ -173,8 +181,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
                       if (v != null) setState(() => _quality = v);
                     },
                     items: _qualities
-                        .map((q) =>
-                            DropdownMenuItem(value: q, child: Text(q)))
+                        .map((q) => DropdownMenuItem(value: q, child: Text(q)))
                         .toList(),
                   ),
                 ],
@@ -182,17 +189,13 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
             ),
           ),
           const SizedBox(height: 12),
-          // Import button
           FilledButton.icon(
             icon: const Icon(Icons.search),
             label: const Text('Match Tracks'),
             onPressed: _csvPath != null && !_loading ? _importCSV : null,
           ),
           const SizedBox(height: 16),
-          // Loading
-          if (_loading)
-            const Center(child: CircularProgressIndicator()),
-          // Error
+          if (_loading) const Center(child: CircularProgressIndicator()),
           if (_error != null)
             Card(
               color: Theme.of(context).colorScheme.errorContainer,
@@ -201,7 +204,6 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
                 child: Text(_error!),
               ),
             ),
-          // Results
           if (_results != null) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -234,8 +236,8 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
                   matched
                       ? '${track?['artist'] ?? artistName} - ${track?['album'] ?? ''}'
                       : error.toString().isNotEmpty
-                          ? error.toString()
-                          : artistName.toString(),
+                      ? error.toString()
+                      : artistName.toString(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

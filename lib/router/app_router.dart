@@ -23,7 +23,7 @@ final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: [
-    // Detail pages (outside shell — no bottom nav)
+    // Detail screens that live outside the shell (no bottom nav)
     GoRoute(
       path: '/content/:type/:id',
       parentNavigatorKey: _rootNavigatorKey,
@@ -115,7 +115,6 @@ final appRouter = GoRouter(
         },
       ),
     ),
-    // Main shell with bottom nav
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => AppShell(child: child),
@@ -130,7 +129,6 @@ final appRouter = GoRouter(
   ],
 );
 
-/// Shell with bottom navigation bar.
 class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
@@ -139,11 +137,10 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Eagerly initialize download tracks accumulator so events are never missed.
+    // Initialize the download-tracks accumulator right away so no events slip through.
     ref.watch(downloadTracksProvider);
 
-    final location =
-        GoRouterState.of(context).uri.toString();
+    final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _tabs.indexWhere((t) => location.startsWith(t));
 
     return Scaffold(
@@ -154,12 +151,12 @@ class AppShell extends ConsumerWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
+          NavigationDestination(icon: Icon(Icons.download), label: 'Queue'),
           NavigationDestination(
-              icon: Icon(Icons.download), label: 'Queue'),
-          NavigationDestination(
-              icon: Icon(Icons.library_music), label: 'Library'),
-          NavigationDestination(
-              icon: Icon(Icons.settings), label: 'Settings'),
+            icon: Icon(Icons.library_music),
+            label: 'Library',
+          ),
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
     );

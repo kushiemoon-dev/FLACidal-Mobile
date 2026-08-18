@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
 
-/// Format conversion page — convert FLAC files to other formats.
 class ConversionPage extends ConsumerStatefulWidget {
   final List<String> filePaths;
   const ConversionPage({super.key, required this.filePaths});
@@ -65,16 +64,16 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conversion complete')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Conversion finished')));
       }
     } catch (e) {
       setState(() => _converting = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
       }
     }
   }
@@ -86,8 +85,8 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : !_converterAvailable
-              ? _buildUnavailable()
-              : _buildForm(),
+          ? _buildUnavailable()
+          : _buildForm(),
     );
   }
 
@@ -98,11 +97,13 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
         children: [
           Icon(Icons.warning, size: 64, color: Colors.orange),
           SizedBox(height: 16),
-          Text('FFmpeg not available'),
+          Text('FFmpeg is unavailable'),
           SizedBox(height: 8),
-          Text('Format conversion requires FFmpeg installed on the device.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey)),
+          Text(
+            'FFmpeg needs to be installed on this device for format conversion to work.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -112,32 +113,38 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Files to convert
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${widget.filePaths.length} file(s) selected',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  '${widget.filePaths.length} file(s) selected',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
-                ...widget.filePaths.take(5).map((p) => Text(
-                      p.split('/').last,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )),
+                ...widget.filePaths
+                    .take(5)
+                    .map(
+                      (p) => Text(
+                        p.split('/').last,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                 if (widget.filePaths.length > 5)
-                  Text('... and ${widget.filePaths.length - 5} more',
-                      style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    '... and ${widget.filePaths.length - 5} more',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 16),
 
-        // Format selector
         Text('Output Format', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         SegmentedButton<String>(
@@ -151,9 +158,10 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
         ),
         const SizedBox(height: 16),
 
-        // Bitrate
-        Text('Bitrate: $_bitrate kbps',
-            style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          'Bitrate: $_bitrate kbps',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         Slider(
           value: _bitrate.toDouble(),
           min: 128,
@@ -164,35 +172,40 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
         ),
         const SizedBox(height: 8),
 
-        // Delete source
         SwitchListTile(
-          title: const Text('Delete source files'),
-          subtitle: const Text('Remove original FLAC after conversion'),
+          title: const Text('Delete original files'),
+          subtitle: const Text(
+            'Deletes the original FLAC once conversion finishes',
+          ),
           value: _deleteSource,
           onChanged: (v) => setState(() => _deleteSource = v),
         ),
         const SizedBox(height: 24),
 
-        // Convert button
         FilledButton.icon(
           onPressed: _converting ? null : _convert,
           icon: _converting
               ? const SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.transform),
           label: Text(_converting ? 'Converting...' : 'Convert'),
         ),
 
-        // Result
         if (_result != null) ...[
           const SizedBox(height: 16),
           Card(
             color: Theme.of(context).colorScheme.primaryContainer,
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Conversion complete',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer)),
+              child: Text(
+                'Conversion finished',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
             ),
           ),
         ],

@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 
-/// Controller for a batch download progress dialog.
-///
-/// Returned by [ProgressDialog.show]. Call [update] to advance progress,
-/// and [close] to dismiss.
 class ProgressDialogController {
   final _ProgressDialogState _state;
   final BuildContext _dialogContext;
 
   ProgressDialogController._(this._state, this._dialogContext);
 
-  /// Update the dialog with current completion count and track name.
   void update(int completed, String currentTrack) {
     if (_state.mounted) {
       _state._update(completed, currentTrack);
     }
   }
 
-  /// Dismiss the dialog.
   void close() {
     if (Navigator.of(_dialogContext).canPop()) {
       Navigator.of(_dialogContext).pop();
@@ -25,17 +19,13 @@ class ProgressDialogController {
   }
 }
 
-/// Modal batch download progress dialog.
+/// A modal dialog showing batch download progress.
 ///
-/// Use the static [show] method to display and receive a controller,
-/// or embed [ProgressDialogContent] directly as a standalone widget.
+/// Call the static [show] method to display it and get back a controller,
+/// or embed [ProgressDialogContent] directly as its own standalone widget.
 class ProgressDialog {
   ProgressDialog._();
 
-  /// Show a modal progress dialog and return a controller.
-  ///
-  /// [total] is the total number of items to process.
-  /// [onCancel] is called when the user taps Cancel.
   static Future<ProgressDialogController> show(
     BuildContext context, {
     required int total,
@@ -119,7 +109,7 @@ class _ProgressDialogState extends State<_ProgressDialogWidget> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Downloading $_completed of ${widget.total}',
+            '$_completed of ${widget.total} downloaded so far',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           if (_currentTrack.isNotEmpty) ...[
@@ -127,8 +117,8 @@ class _ProgressDialogState extends State<_ProgressDialogWidget> {
             Text(
               _currentTrack,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -136,18 +126,15 @@ class _ProgressDialogState extends State<_ProgressDialogWidget> {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: widget.onCancel,
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: widget.onCancel, child: const Text('Cancel')),
       ],
     );
   }
 }
 
-/// Standalone progress widget for embedding in custom layouts.
+/// A standalone progress widget meant for embedding in custom layouts.
 ///
-/// Unlike [ProgressDialog.show], this does not manage its own dialog.
+/// It doesn't manage its own dialog, unlike [ProgressDialog.show].
 class ProgressDialogContent extends StatelessWidget {
   final int completed;
   final int total;
@@ -183,7 +170,7 @@ class ProgressDialogContent extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Downloading $completed of $total',
+          '$completed of $total downloaded so far',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         if (currentTrack.isNotEmpty) ...[
@@ -191,8 +178,8 @@ class ProgressDialogContent extends StatelessWidget {
           Text(
             currentTrack,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -201,10 +188,7 @@ class ProgressDialogContent extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onCancel,
-              child: const Text('Cancel'),
-            ),
+            child: TextButton(onPressed: onCancel, child: const Text('Cancel')),
           ),
         ],
       ],

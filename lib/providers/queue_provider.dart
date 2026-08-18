@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core_provider.dart';
 
-/// Provides the current download queue status (counts).
 final queueStatusProvider =
     NotifierProvider<QueueStatusNotifier, AsyncValue<Map<String, dynamic>>>(
-        QueueStatusNotifier.new);
+      QueueStatusNotifier.new,
+    );
 
 class QueueStatusNotifier extends Notifier<AsyncValue<Map<String, dynamic>>> {
   @override
@@ -29,13 +29,13 @@ class QueueStatusNotifier extends Notifier<AsyncValue<Map<String, dynamic>>> {
   }
 }
 
-/// Track state accumulated from download events. Key = trackId.
+// Keyed by trackId.
 typedef TrackStates = Map<int, Map<String, dynamic>>;
 
-/// Accumulates all download events by trackId so the full list is visible.
 final downloadTracksProvider =
     NotifierProvider<DownloadTracksNotifier, TrackStates>(
-        DownloadTracksNotifier.new);
+      DownloadTracksNotifier.new,
+    );
 
 class DownloadTracksNotifier extends Notifier<TrackStates> {
   @override
@@ -52,7 +52,6 @@ class DownloadTracksNotifier extends Notifier<TrackStates> {
     if (trackId == null) return;
     final id = (trackId as num).toInt();
 
-    // Compute fractional progress from byte-level fields when available
     final bytesDownloaded = (payload['bytesDownloaded'] as num?)?.toInt() ?? 0;
     final bytesTotal = (payload['bytesTotal'] as num?)?.toInt() ?? 0;
     final speed = (payload['speed'] as num?)?.toInt() ?? 0;

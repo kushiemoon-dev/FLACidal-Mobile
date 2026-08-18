@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core_provider.dart';
 
-/// Download options synced with Go backend.
 final downloadOptionsProvider =
     NotifierProvider<DownloadOptionsNotifier, Map<String, dynamic>>(
-        DownloadOptionsNotifier.new);
+      DownloadOptionsNotifier.new,
+    );
 
 class DownloadOptionsNotifier extends Notifier<Map<String, dynamic>> {
   @override
@@ -29,7 +29,7 @@ class DownloadOptionsNotifier extends Notifier<Map<String, dynamic>> {
     final updated = Map<String, dynamic>.from(state);
     updated[key] = value;
     state = updated;
-    // Push to Go backend
+    // Sync to the Go backend
     try {
       ref.read(flacCoreProvider).callSync('setDownloadOptions', updated);
     } catch (_) {}

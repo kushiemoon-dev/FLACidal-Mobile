@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Color constants matching the FLACidal desktop app.
+/// Color constants that mirror the FLACidal desktop app.
 class FlacColors {
   FlacColors._();
 
-  // Dark theme
   static const bgVoid = Color(0xFF050505);
   static const bgPrimary = Color(0xFF0A0A0A);
   static const bgSecondary = Color(0xFF111111);
@@ -24,7 +23,6 @@ class FlacColors {
   static const info = Color(0xFF3B82F6);
   static const border = Color(0xFF1A1A1A);
 
-  // Light theme
   static const lightBgPrimary = Color(0xFFFFFFFF);
   static const lightBgSecondary = Color(0xFFF5F5F5);
   static const lightBgTertiary = Color(0xFFE5E5E5);
@@ -34,7 +32,6 @@ class FlacColors {
   static const lightAccent = Color(0xFFDB2777);
 }
 
-/// Theme builder that produces ThemeData matching the desktop app aesthetic.
 class FlacTheme {
   FlacTheme._();
 
@@ -193,9 +190,7 @@ class FlacTheme {
         tileColor: Colors.transparent,
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-        },
+        builders: {TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()},
       ),
     );
   }
@@ -358,9 +353,7 @@ class FlacTheme {
         tileColor: Colors.transparent,
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-        },
+        builders: {TargetPlatform.android: FadeUpwardsPageTransitionsBuilder()},
       ),
     );
   }

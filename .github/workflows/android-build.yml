@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: kushiemoon-dev/flacidal-core
-          ref: v0.18.0
+          ref: v0.19.0
           path: flacidal-core
           token: ${{ secrets.CORE_ACCESS_TOKEN }}
 

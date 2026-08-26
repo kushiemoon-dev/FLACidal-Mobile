@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/config_provider.dart';
 import '../providers/core_provider.dart';
 import '../providers/download_options_provider.dart';
 import '../providers/theme_provider.dart';
@@ -41,6 +42,7 @@ class SettingsPage extends ConsumerWidget {
     final accentColor = ref.watch(accentColorProvider);
     final downloadDir = ref.watch(downloadDirProvider);
     final dlOptions = ref.watch(downloadOptionsProvider);
+    final config = ref.watch(configProvider).value ?? {};
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -111,6 +113,50 @@ class SettingsPage extends ConsumerWidget {
             subtitle: Text(dlOptions['PreferredSource'] as String? ?? 'Tidal'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showPreferredSourcePicker(context, ref, dlOptions),
+          ),
+
+          SectionHeader(title: 'Self-Hosted Endpoints'),
+          ListTile(
+            leading: const Icon(Icons.dns),
+            title: const Text('Tidal priority endpoints'),
+            subtitle: Text(
+              _endpointsSubtitle(config['tidalPriorityEndpoints']),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showEndpointsManager(
+              context,
+              ref,
+              'tidalPriorityEndpoints',
+              'Tidal Priority Endpoints',
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dns),
+            title: const Text('Qobuz priority endpoints'),
+            subtitle: Text(
+              _endpointsSubtitle(config['qobuzPriorityEndpoints']),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showEndpointsManager(
+              context,
+              ref,
+              'qobuzPriorityEndpoints',
+              'Qobuz Priority Endpoints',
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dns),
+            title: const Text('Amazon priority endpoints'),
+            subtitle: Text(
+              _endpointsSubtitle(config['amazonPriorityEndpoints']),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showEndpointsManager(
+              context,
+              ref,
+              'amazonPriorityEndpoints',
+              'Amazon Priority Endpoints',
+            ),
           ),
 
           ListTile(
@@ -382,6 +428,39 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  static String _endpointsSubtitle(dynamic list) {
+    final count = list is List ? list.length : 0;
+    return count == 0
+        ? 'Public pool only'
+        : '$count self-hosted endpoint${count == 1 ? '' : 's'}';
+  }
+
+  void _showEndpointsManager(
+    BuildContext context,
+    WidgetRef ref,
+    String configKey,
+    String title,
+  ) {
+    final config = ref.read(configProvider).value ?? {};
+    final endpoints = List<String>.from(
+      config[configKey] as List<dynamic>? ?? [],
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => _RepoManagerDialog(
+        title: title,
+        initialRepos: endpoints,
+        onSave: (updated) {
+          final current = ref.read(configProvider).value ?? {};
+          final newConfig = Map<String, dynamic>.from(current)
+            ..[configKey] = updated;
+          ref.read(configProvider.notifier).save(newConfig);
+        },
+      ),
+    );
+  }
+
   static String _folderTemplateLabel(String template) {
     for (final (label, value) in _folderTemplates) {
       if (value == template) return label;
@@ -421,10 +500,15 @@ class SettingsPage extends ConsumerWidget {
 }
 
 class _RepoManagerDialog extends StatefulWidget {
+  final String title;
   final List<String> initialRepos;
   final ValueChanged<List<String>> onSave;
 
-  const _RepoManagerDialog({required this.initialRepos, required this.onSave});
+  const _RepoManagerDialog({
+    this.title = 'Extension Repositories',
+    required this.initialRepos,
+    required this.onSave,
+  });
 
   @override
   State<_RepoManagerDialog> createState() => _RepoManagerDialogState();
@@ -456,7 +540,7 @@ class _RepoManagerDialogState extends State<_RepoManagerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Extension Repositories'),
+      title: Text(widget.title),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(

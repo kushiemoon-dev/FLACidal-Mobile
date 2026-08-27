@@ -452,10 +452,20 @@ class SettingsPage extends ConsumerWidget {
         title: title,
         initialRepos: endpoints,
         onSave: (updated) {
-          final current = ref.read(configProvider).value ?? {};
-          final newConfig = Map<String, dynamic>.from(current)
-            ..[configKey] = updated;
-          ref.read(configProvider.notifier).save(newConfig);
+          try {
+            final current = ref.read(configProvider).value ?? {};
+            final newConfig = Map<String, dynamic>.from(current)
+              ..[configKey] = updated;
+            ref.read(configProvider.notifier).save(newConfig);
+          } catch (e) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not save endpoints: $e'),
+                backgroundColor: Colors.red.shade700,
+              ),
+            );
+          }
         },
       ),
     );

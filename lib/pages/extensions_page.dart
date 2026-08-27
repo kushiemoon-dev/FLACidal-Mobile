@@ -484,12 +484,16 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       );
     }
 
-    final installedIds = _installed.map((e) {
-      final m =
-          (e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ??
-          {};
-      return m['id'] as String? ?? '';
-    }).toSet();
+    final installedVersions = {
+      for (final e in _installed)
+        ((e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ??
+                        {})['id']
+                    as String? ??
+                '':
+            ((e)['manifest'] as Map<String, dynamic>? ?? {})['version']
+                as String? ??
+            '',
+    };
 
     final filtered = _filteredRegistry;
 
@@ -544,7 +548,12 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
               final desc = item['description'] as String? ?? '';
               final version = item['latestVersion'] as String? ?? '';
               final downloadURL = item['downloadURL'] as String? ?? '';
-              final installed = installedIds.contains(id);
+              final installedVersion = installedVersions[id];
+              final installed = installedVersion != null;
+              final hasUpdate =
+                  installed &&
+                  installedVersion != version &&
+                  version.isNotEmpty;
               final permissions =
                   (item['permissions'] as List<dynamic>?)
                       ?.map((p) => p.toString())
@@ -561,7 +570,14 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                     '${permissions.isNotEmpty ? '\nPermissions: ${permissions.join(", ")}' : ''}',
                   ),
                   isThreeLine: desc.isNotEmpty || permissions.isNotEmpty,
-                  trailing: installed
+                  trailing: hasUpdate
+                      ? FilledButton(
+                          onPressed: downloadURL.isNotEmpty
+                              ? () => _installExtension(id, downloadURL)
+                              : null,
+                          child: const Text('Update'),
+                        )
+                      : installed
                       ? const Chip(label: Text('Installed'))
                       : _installingIds.contains(id)
                       ? const SizedBox(

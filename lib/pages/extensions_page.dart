@@ -373,6 +373,11 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                   ?.map((c) => c.toString())
                   .join(', ') ??
               '';
+          final permissions =
+              (manifest['permissions'] as List<dynamic>?)
+                  ?.map((p) => p.toString())
+                  .toList() ??
+              [];
 
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -389,7 +394,16 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                 ),
               ),
               title: Text(name),
-              subtitle: Text('$author · v$version · $caps'),
+              subtitle: permissions.isEmpty
+                  ? Text('$author · v$version · $caps')
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('$author · v$version · $caps'),
+                        Text('Permissions: ${permissions.join(", ")}'),
+                      ],
+                    ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -531,6 +545,11 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
               final version = item['latestVersion'] as String? ?? '';
               final downloadURL = item['downloadURL'] as String? ?? '';
               final installed = installedIds.contains(id);
+              final permissions =
+                  (item['permissions'] as List<dynamic>?)
+                      ?.map((p) => p.toString())
+                      .toList() ??
+                  [];
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -538,9 +557,10 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                   leading: const CircleAvatar(child: Icon(Icons.extension)),
                   title: Text(name),
                   subtitle: Text(
-                    '$desc${version.isNotEmpty ? '\nv$version' : ''}',
+                    '$desc${version.isNotEmpty ? '\nv$version' : ''}'
+                    '${permissions.isNotEmpty ? '\nPermissions: ${permissions.join(", ")}' : ''}',
                   ),
-                  isThreeLine: desc.isNotEmpty,
+                  isThreeLine: desc.isNotEmpty || permissions.isNotEmpty,
                   trailing: installed
                       ? const Chip(label: Text('Installed'))
                       : _installingIds.contains(id)

@@ -5,6 +5,7 @@
 ### New features
 - **Extensions permissions disclosure** — The extensions page now shows an extension's declared `permissions` (storage access, file deletion, library re-enrichment, etc.) before install/activation, on both the Installed and Browse tabs, so users can make informed decisions about which extensions to trust.
 - **Update detection in Browse tab** — The Browse tab now distinguishes "Update available" from "Installed, up to date" for already-installed extensions by comparing the registry's version string against the locally installed version, matching desktop's behavior.
+- **Core dependency bump to v0.21.0** — this build also pulls in [flacidal-core v0.21.0](https://github.com/kushiemoon-dev/flacidal-core/releases/tag/v0.21.0): the new metadata-extension capability (structured track metadata supplied by extension plugins) is what makes the permissions and update-badge UI above meaningful, and separately, embedded covers now always get fetched over the network and written to the tag whenever a download job has a `CoverURL`, even with zero metadata extensions installed — previously this never fetched. That cover-art change is a deliberate upstream behavior change and affects every mobile user, not just extension users.
 
 ## v0.8.0-beta.10 — 2026-08-27
 

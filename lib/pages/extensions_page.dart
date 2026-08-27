@@ -570,7 +570,13 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                     '${permissions.isNotEmpty ? '\nPermissions: ${permissions.join(", ")}' : ''}',
                   ),
                   isThreeLine: desc.isNotEmpty || permissions.isNotEmpty,
-                  trailing: hasUpdate
+                  trailing: _installingIds.contains(id)
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : hasUpdate
                       ? FilledButton(
                           onPressed: downloadURL.isNotEmpty
                               ? () => _installExtension(id, downloadURL)
@@ -579,12 +585,6 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                         )
                       : installed
                       ? const Chip(label: Text('Installed'))
-                      : _installingIds.contains(id)
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
                       : FilledButton(
                           onPressed: downloadURL.isNotEmpty
                               ? () => _installExtension(id, downloadURL)

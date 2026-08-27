@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.0-beta.11 — 2026-08-27
+
+### New features
+- **Extensions permissions disclosure** — The extensions page now shows an extension's declared `permissions` (storage access, file deletion, library re-enrichment, etc.) before install/activation, on both the Installed and Browse tabs, so users can make informed decisions about which extensions to trust.
+- **Update detection in Browse tab** — The Browse tab now distinguishes "Update available" from "Installed, up to date" for already-installed extensions by comparing the registry's version string against the locally installed version, matching desktop's behavior.
+
 ## v0.8.0-beta.10 — 2026-08-27
 
 ### New features

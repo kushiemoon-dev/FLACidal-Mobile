@@ -212,7 +212,7 @@ class _TrackTile extends StatelessWidget {
     } else if (status == 'downloading' && speed > 0 && bytesTotal > 0) {
       final remaining = bytesTotal - bytesDownloaded;
       subtitle = Text(
-        '${_formatSpeed(speed)} — ${_formatBytes(remaining)} left',
+        '${_formatSpeed(speed)}, ${_formatBytes(remaining)} left',
         style: Theme.of(context).textTheme.bodySmall,
       );
     } else if (artist.isNotEmpty) {

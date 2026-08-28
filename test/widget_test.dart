@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 // Run with: flutter test --device-id=<device>
 
 void main() {
-  test('baseline check — unit tests run', () {
+  test('baseline check: unit tests run', () {
     expect(1 + 1, 2);
   });
 }

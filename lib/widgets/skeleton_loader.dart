@@ -5,7 +5,7 @@ import '../theme/flacidal_theme.dart';
 
 enum SkeletonLayout { trackList, gridView, detailHeader, searchResults }
 
-// Pure UI widget — zero provider dependencies, keep it that way.
+// Pure UI widget: zero provider dependencies, keep it that way.
 class SkeletonLoader extends StatelessWidget {
   final SkeletonLayout layout;
   final int itemCount;

@@ -5,7 +5,7 @@ class URLResolver {
   static const _odesliBase = 'https://api.song.link/v1-alpha.1/links';
 
   static Future<ResolvedURL?> resolve(String url) async {
-    // Already a Tidal or Qobuz URL — null here means no resolution needed, not failure
+    // Already a Tidal or Qobuz URL: null here means no resolution needed, not failure
     final lower = url.toLowerCase();
     if (lower.contains('tidal.com') || lower.contains('qobuz.com')) {
       return null;

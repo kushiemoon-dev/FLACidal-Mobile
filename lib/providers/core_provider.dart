@@ -17,7 +17,7 @@ final downloadEventsProvider = StreamProvider<Map<String, dynamic>>((ref) {
 });
 
 // Mirrors FlacCore.downloadDir, which main.dart also writes to directly at
-// startup — keep both in sync manually, there's no automatic binding.
+// startup, keep both in sync manually: there's no automatic binding.
 final downloadDirProvider = NotifierProvider<DownloadDirNotifier, String>(
   DownloadDirNotifier.new,
 );

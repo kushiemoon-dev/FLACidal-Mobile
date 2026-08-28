@@ -83,7 +83,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
 
     if (matched.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tracks matched — nothing to queue')),
+        const SnackBar(content: Text('No tracks matched, nothing to queue')),
       );
       return;
     }
@@ -138,7 +138,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
                   const SizedBox(height: 8),
                   const Text(
                     'CSV files need these columns: Track Name, Artist Name(s), '
-                    "Album Name, ISRC — Spotify's export format works too.",
+                    "Album Name, ISRC: Spotify's export format works too.",
                   ),
                   const SizedBox(height: 12),
                   Row(

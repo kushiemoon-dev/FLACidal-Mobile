@@ -167,7 +167,7 @@ class FlacCore {
 
   static void _onEvent(Pointer<Char> jsonPtr) {
     final jsonStr = jsonPtr.cast<Utf8>().toDartString();
-    // Native memory is freed once copied — it uses the same allocator as C.CString (malloc).
+    // Native memory is freed once copied: it uses the same allocator as C.CString (malloc).
     FlacCore.instance._ffi.flacFree(jsonPtr);
 
     try {

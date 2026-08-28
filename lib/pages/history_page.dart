@@ -40,7 +40,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Clear History'),
         content: const Text(
-          "This removes your entire download history — there's no going back.",
+          "This removes your entire download history; there's no going back.",
         ),
         actions: [
           TextButton(

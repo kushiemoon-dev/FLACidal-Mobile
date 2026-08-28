@@ -80,7 +80,7 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
         });
       }
     } catch (_) {
-      // The build method handles the fallback — _dominantColor is simply left null
+      // The build method handles the fallback; _dominantColor is simply left null
     }
   }
 

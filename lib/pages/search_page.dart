@@ -133,7 +133,7 @@ class _SearchPageState extends ConsumerState<SearchPage>
             ];
           }
         } on FlacCoreException {
-          // Qobuz isn't configured — quietly skip it unless "all" is being searched
+          // Qobuz isn't configured, so quietly skip it unless "all" is being searched
           if (_service == _SearchService.qobuz) rethrow;
         }
       }

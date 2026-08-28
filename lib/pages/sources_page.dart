@@ -168,7 +168,7 @@ class _SourcesPageState extends ConsumerState<SourcesPage> {
         });
       }
     } catch (_) {
-      // Not fatal — fall back to the default order
+      // Not fatal, fall back to the default order
       setState(() => _sourceOrderLoaded = true);
     }
   }

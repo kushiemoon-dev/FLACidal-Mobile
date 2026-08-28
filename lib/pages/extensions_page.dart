@@ -373,6 +373,11 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                   ?.map((c) => c.toString())
                   .join(', ') ??
               '';
+          final permissions =
+              (manifest['permissions'] as List<dynamic>?)
+                  ?.map((p) => p.toString())
+                  .toList() ??
+              [];
 
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -389,7 +394,16 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                 ),
               ),
               title: Text(name),
-              subtitle: Text('$author · v$version · $caps'),
+              subtitle: permissions.isEmpty
+                  ? Text('$author · v$version · $caps')
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('$author · v$version · $caps'),
+                        Text('Permissions: ${permissions.join(", ")}'),
+                      ],
+                    ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -470,12 +484,16 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       );
     }
 
-    final installedIds = _installed.map((e) {
-      final m =
-          (e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ??
-          {};
-      return m['id'] as String? ?? '';
-    }).toSet();
+    final installedVersions = {
+      for (final e in _installed)
+        ((e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ??
+                        {})['id']
+                    as String? ??
+                '':
+            ((e)['manifest'] as Map<String, dynamic>? ?? {})['version']
+                as String? ??
+            '',
+    };
 
     final filtered = _filteredRegistry;
 
@@ -530,7 +548,17 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
               final desc = item['description'] as String? ?? '';
               final version = item['latestVersion'] as String? ?? '';
               final downloadURL = item['downloadURL'] as String? ?? '';
-              final installed = installedIds.contains(id);
+              final installedVersion = installedVersions[id];
+              final installed = installedVersion != null;
+              final hasUpdate =
+                  installed &&
+                  installedVersion != version &&
+                  version.isNotEmpty;
+              final permissions =
+                  (item['permissions'] as List<dynamic>?)
+                      ?.map((p) => p.toString())
+                      .toList() ??
+                  [];
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -538,17 +566,25 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
                   leading: const CircleAvatar(child: Icon(Icons.extension)),
                   title: Text(name),
                   subtitle: Text(
-                    '$desc${version.isNotEmpty ? '\nv$version' : ''}',
+                    '$desc${version.isNotEmpty ? '\nv$version' : ''}'
+                    '${permissions.isNotEmpty ? '\nPermissions: ${permissions.join(", ")}' : ''}',
                   ),
-                  isThreeLine: desc.isNotEmpty,
-                  trailing: installed
-                      ? const Chip(label: Text('Installed'))
-                      : _installingIds.contains(id)
+                  isThreeLine: desc.isNotEmpty || permissions.isNotEmpty,
+                  trailing: _installingIds.contains(id)
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
+                      : hasUpdate
+                      ? FilledButton(
+                          onPressed: downloadURL.isNotEmpty
+                              ? () => _installExtension(id, downloadURL)
+                              : null,
+                          child: const Text('Update'),
+                        )
+                      : installed
+                      ? const Chip(label: Text('Installed'))
                       : FilledButton(
                           onPressed: downloadURL.isNotEmpty
                               ? () => _installExtension(id, downloadURL)

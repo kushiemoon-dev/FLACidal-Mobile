@@ -30,33 +30,33 @@
 
 ## Overview
 
-Think of **FLACidal Mobile** as the on-the-go counterpart to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal): drop in a Tidal URL, pick your tracks, and grab Hi-Res or Lossless FLAC straight onto your device — no account needed.
+**FLACidal Mobile** is the on-the-go counterpart to [FLACidal Desktop](https://github.com/kushiemoon-dev/FLACidal). Drop in a Tidal URL, pick your tracks, and Hi-Res or Lossless FLAC lands straight on your device, no account needed.
 
-The UI runs on Flutter, while a shared Go backend reachable through FFI drives every part of the download pipeline.
+Flutter handles the UI, while a shared Go backend reached through FFI drives the entire download pipeline.
 
 ---
 
 ## Features
 
-- **Hi-Res & Lossless** — Up to 24-bit/192 kHz straight from Tidal and Qobuz
-- **Paste & Download** — Drop in any Tidal URL — album, playlist, track, or artist
-- **URL Resolution** — Links from other platforms get auto-resolved to Tidal through Odesli
-- **Search** — Switch providers and sort results while browsing Tidal and Qobuz
-- **Real-time Queue** — Watch download speed, ETA, and per-track percentage live
-- **Background Downloads** — A foreground service keeps transfers going even after you close the app
-- **Library** — Albums grouped by disc number, filterable by source/quality/format, with "Already in Library" flagging
-- **Metadata Editing** — Every field — title, artist, album, composer, genre, ISRC, and more — is editable right in the app
-- **Cover Art** — Pull embedded artwork out and save it as a standalone .jpg
-- **Lyrics** — Grab synced or plain lyrics, embed them in the FLAC, or export as .lrc
-- **Re-enrich** — Refresh and re-embed metadata without touching the audio again
-- **Format Conversion** — Convert FLAC into MP3, AAC, or Opus while keeping all metadata intact
-- **MP3 Tagging** — Complete ID3v2 tagging for MP3, cover art and lyrics and composer included
-- **Artist Tag Modes** — Choose joined or split Vorbis ARTIST tags for multi-artist tracks
-- **Singles/Albums Folders** — Singles and albums land in separate folders automatically
-- **Extension System** — Add community extensions to pull in more music sources
-- **Audio Analysis** — Spot upscaled files via spectrum analysis with a confidence score
-- **Custom Theme** — Matches the desktop app's dark theme, with the Outfit font and accent color options
-- **Share Intent** — Share a Tidal link from your browser and downloading starts right away
+- **Hi-Res & Lossless** audio, up to 24-bit/192 kHz straight from Tidal and Qobuz
+- **Paste & Download**: drop in any Tidal URL, whether it's an album, playlist, track, or artist page
+- **URL Resolution** auto-resolves links from other platforms to Tidal through Odesli
+- **Search** lets you switch providers and sort results while browsing Tidal and Qobuz
+- A **Real-time Queue** showing download speed, ETA, and per-track percentage live
+- **Background Downloads**: a foreground service keeps transfers going even after the app is closed
+- A **Library** with albums grouped by disc number, filterable by source/quality/format, and "Already in Library" flagging
+- **Metadata Editing** right in the app, covering title, artist, album, composer, genre, ISRC, and more
+- **Cover Art** extraction, saving embedded artwork as a standalone .jpg
+- **Lyrics** support: grab synced or plain lyrics, embed them in the FLAC, or export as .lrc
+- **Re-enrich** to refresh and re-embed metadata without touching the audio again
+- **Format Conversion** from FLAC into MP3, AAC, or Opus, with all metadata kept intact
+- Complete **MP3 Tagging**: ID3v2 tags including cover art, lyrics, and composer
+- **Artist Tag Modes** for multi-artist tracks, choosing joined or split Vorbis ARTIST tags
+- **Singles/Albums Folders**: singles and albums sort into separate folders automatically
+- An **Extension System** for adding community extensions that pull in more music sources
+- **Audio Analysis** flags upscaled files via spectrum analysis, with a confidence score attached
+- A **Custom Theme** matching the desktop app's dark theme, with the Outfit font and accent color options
+- **Share Intent**: share a Tidal link from your browser and downloading starts right away
 
 ---
 
@@ -68,7 +68,7 @@ The UI runs on Flutter, while a shared Go backend reachable through FFI drives e
 |----------|------|---------|
 | Android | `FLACidal.apk` | Direct install |
 
-> **iOS:** iOS is supported by the codebase, but nobody with an Apple Developer account has stepped up yet to handle code signing and IPA distribution. Want to help out? Check [Contributing](#contributing).
+> **iOS:** The codebase already supports iOS, but nobody with an Apple Developer account has stepped up yet to handle code signing and IPA distribution. Want to help? Check [Contributing](#contributing).
 
 ---
 
@@ -104,7 +104,7 @@ flacidal-mobile/         Flutter app
 flacidal-core/           Shared Go backend (compiled as .so/.a)
 ```
 
-Networking, downloads, metadata, and storage are all handled by the Go backend, while Flutter takes care of the UI — the two talk to each other via JSON-RPC over FFI.
+The Go backend handles networking, downloads, metadata, and storage, while Flutter takes care of the UI. The two talk to each other via JSON-RPC over FFI.
 
 ---
 
@@ -153,25 +153,25 @@ flutter build ipa --no-codesign
 ## FAQ
 
 **Do I need a Tidal account?**
-Nope — FLACidal takes care of authentication on its own.
+Nope, FLACidal handles authentication on its own.
 
 **Where are files saved?**
-On Android, `/storage/emulated/0/Music/FLACidal/` — and it's configurable from Settings.
+On Android: `/storage/emulated/0/Music/FLACidal/`, and it's configurable from Settings.
 
 **Is iOS supported?**
-It compiles for iOS already, though Apple signing still needs a contributor. In the meantime you can build it yourself with `flutter build ipa --no-codesign` and sideload through AltStore/SideStore. Contributions are very welcome!
+It already compiles for iOS, though Apple signing still needs a contributor. In the meantime, build it yourself with `flutter build ipa --no-codesign` and sideload it through AltStore/SideStore. Contributions are very welcome.
 
 **Does it work in the background?**
-It does — a foreground service keeps downloads going while the app sits minimized.
+It does: a foreground service keeps downloads going while the app sits minimized.
 
 ---
 
 ## Contributing
 
-Contributions are welcome — here's where extra hands would help most:
+Contributions are welcome. Here's where extra hands would help most:
 
-- **iOS build & signing** — Someone with an Apple Developer account is needed to set up code signing, TestFlight distribution, and the AltStore source; the Flutter + Go FFI codebase is already iOS-ready.
-- **Bug reports** — File an issue that includes steps to reproduce.
+- **iOS build & signing**: needs someone with an Apple Developer account to set up code signing, TestFlight distribution, and the AltStore source. The Flutter + Go FFI codebase is already iOS-ready.
+- **Bug reports**: file an issue with steps to reproduce.
 
 ---
 

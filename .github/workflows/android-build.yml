@@ -42,6 +42,16 @@ jobs:
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      # The app is intentionally signed with the debug key (android/app/build.gradle.kts),
+      # not a real release key -- this repo distributes betas via GitHub Releases, not the
+      # Play Store. Without this, every CI run generates a fresh throwaway debug.keystore,
+      # so each release's signature differs from the last and Android refuses to install
+      # an update over the previous one (INSTALL_FAILED_UPDATE_INCOMPATIBLE).
+      - name: Restore persistent debug keystore
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.ANDROID_DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
+
       - name: Setup Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:

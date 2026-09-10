@@ -10,9 +10,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/download_service.dart';
 import 'theme/flacidal_theme.dart';
 import 'core/flac_core.dart';
+import 'providers/queue_provider.dart';
 import 'providers/shared_url_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
+
+bool _isQueueBusy(Map<String, dynamic>? status) {
+  if (status == null) return false;
+  final active = (status['active'] as num?)?.toInt() ?? 0;
+  final queued = (status['queued'] as num?)?.toInt() ?? 0;
+  return active > 0 || queued > 0;
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +66,30 @@ void main() async {
 
   final container = ProviderContainer(
     overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+  );
+
+  // Wire the foreground service lifecycle to the global download queue:
+  // start on the first active/queued job (any RPC path), stop only when
+  // the queue is fully empty. fireImmediately covers a queue already
+  // non-empty at cold start (restoreQueue() runs before this listener).
+  container.listen<AsyncValue<Map<String, dynamic>>>(
+    queueStatusProvider,
+    (previous, next) {
+      final nextStatus = next.value;
+      if (nextStatus == null) return; // ignore error/loading states
+
+      final wasBusy = _isQueueBusy(previous?.value);
+      final isBusy = _isQueueBusy(nextStatus);
+
+      if (!wasBusy && isBusy) {
+        final active = (nextStatus['active'] as num?)?.toInt() ?? 0;
+        final queued = (nextStatus['queued'] as num?)?.toInt() ?? 0;
+        DownloadService.start(total: active + queued);
+      } else if (wasBusy && !isBusy) {
+        DownloadService.stop();
+      }
+    },
+    fireImmediately: true,
   );
 
   if (Platform.isAndroid || Platform.isIOS) {

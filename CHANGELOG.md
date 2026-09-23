@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.0-beta.12: 2026-09-23
+
+### New features
+- **Automatic update checks and installs**: the app now checks for updates at cold start and on resume (throttled to once per 24h), comparing against every published release tag rather than just the newest, since this repo has no stable release yet. A user 3 or more releases behind is blocked with a full-screen prompt until they update; updating downloads the universal APK, verifies its SHA256 checksum, and triggers the system install intent. `AndroidManifest.xml` gained `REQUEST_INSTALL_PACKAGES`, required to trigger that install prompt.
+
 ## v0.8.0-beta.11 — 2026-08-27
 
 ### New features

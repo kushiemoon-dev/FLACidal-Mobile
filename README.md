@@ -49,12 +49,9 @@ Flutter handles the UI, while a shared Go backend reached through FFI drives the
 - **Cover Art** extraction, saving embedded artwork as a standalone .jpg
 - **Lyrics** support: grab synced or plain lyrics, embed them in the FLAC, or export as .lrc
 - **Re-enrich** to refresh and re-embed metadata without touching the audio again
-- **Format Conversion** from FLAC into MP3, AAC, or Opus, with all metadata kept intact
 - Complete **MP3 Tagging**: ID3v2 tags including cover art, lyrics, and composer
-- **Artist Tag Modes** for multi-artist tracks, choosing joined or split Vorbis ARTIST tags
 - **Singles/Albums Folders**: singles and albums sort into separate folders automatically
 - An **Extension System** for adding community extensions that pull in more music sources
-- **Audio Analysis** flags upscaled files via spectrum analysis, with a confidence score attached
 - A **Custom Theme** matching the desktop app's dark theme, with the Outfit font and accent color options
 - **Share Intent**: share a Tidal link from your browser and downloading starts right away
 
@@ -140,10 +137,9 @@ flutter build ipa --no-codesign
 
 | Setting | Default | Options |
 |---------|---------|---------|
-| Quality | `LOSSLESS` | `HI_RES_MAX` · `HI_RES_LOSSLESS` · `LOSSLESS` · `HIGH` |
-| Format | `FLAC` | `FLAC` · `M4A` · `ALAC` |
+| Quality | `LOSSLESS` | `HI_RES` · `LOSSLESS` · `HIGH` |
+| Format | `FLAC` | `FLAC` |
 | Folder structure | Flat | By Artist/Album · By Playlist · Flat · Singles/Albums |
-| Artist tag mode | Joined | `joined` (single field) · `split` (multi-value Vorbis) |
 | Theme | Dark | Dark · Light · System |
 | Accent color | Pink | 12 presets |
 | Font | Outfit | 16 options |

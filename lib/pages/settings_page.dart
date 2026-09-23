@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/app_info_provider.dart';
 import '../providers/config_provider.dart';
 import '../providers/core_provider.dart';
 import '../providers/download_options_provider.dart';
@@ -221,10 +222,12 @@ class SettingsPage extends ConsumerWidget {
           ),
 
           SectionHeader(title: 'About'),
-          const ListTile(
-            leading: Icon(Icons.info),
-            title: Text('FLACidal Mobile'),
-            subtitle: Text('v0.8.0-beta.7 · Flutter + Go FFI'),
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: const Text('FLACidal Mobile'),
+            subtitle: Text(
+              '${ref.watch(appVersionProvider).value ?? '…'} · Flutter + Go FFI',
+            ),
           ),
         ],
       ),

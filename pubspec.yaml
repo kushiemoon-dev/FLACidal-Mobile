@@ -54,6 +54,7 @@ dependencies:
   share_plus: ^12.0.1
   google_fonts: ^8.0.2
   just_audio: ^0.9.43
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

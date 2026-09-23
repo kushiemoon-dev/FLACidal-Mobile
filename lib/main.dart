@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'router/app_router.dart';
 import 'widgets/update_required_screen.dart';
 
 const _updateCheckThrottle = Duration(hours: 24);
+const _lastUpdateCheckKey = 'lastUpdateCheckAt';
 
 bool _isQueueBusy(Map<String, dynamic>? status) {
   if (status == null) return false;
@@ -74,8 +76,12 @@ void main() async {
 
   // Cold-start check: an AsyncNotifierProvider runs on first read, no need
   // to await it here. The root widget (FlacApp) watches the same provider
-  // once it's ready.
+  // once it's ready. The timestamp is written here too so a resume shortly
+  // after this cold start doesn't immediately fire a second check.
   container.read(updateStatusProvider);
+  unawaited(
+    prefs.setInt(_lastUpdateCheckKey, DateTime.now().millisecondsSinceEpoch),
+  );
 
   // Wire the foreground service lifecycle to the global download queue:
   // start on the first active/queued job (any RPC path), stop only when
@@ -167,8 +173,6 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
     }
   }
 
-  static const _lastUpdateCheckKey = 'lastUpdateCheckAt';
-
   Future<void> _maybeCheckForUpdate() async {
     final prefs = ref.read(sharedPrefsProvider);
     final lastCheckMs = prefs.getInt(_lastUpdateCheckKey);
@@ -200,11 +204,15 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
       darkTheme: FlacTheme.dark(accentColor: accentColor),
       routerConfig: appRouter,
       builder: (context, child) {
-        final status = ref.watch(updateStatusProvider).value;
-        if (status?.blocked == true) {
-          return UpdateRequiredScreen(status: status!);
-        }
-        return child!;
+        return Consumer(
+          builder: (context, ref, _) {
+            final status = ref.watch(updateStatusProvider).value;
+            if (status?.blocked == true) {
+              return UpdateRequiredScreen(status: status!);
+            }
+            return child!;
+          },
+        );
       },
     );
   }

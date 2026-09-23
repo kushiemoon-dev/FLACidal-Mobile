@@ -58,6 +58,7 @@ dependencies:
   pub_semver: ^2.1.4
   open_file: ^4.0.0
   crypto: ^3.0.0
+  meta: ^1.17.0
 
 dev_dependencies:
   flutter_test:

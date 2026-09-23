@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -41,7 +42,12 @@ class UpdateStatus {
 
 Version? _tryParse(String tag) {
   try {
-    return Version.parse(tag.replaceFirst(RegExp(r'^v'), ''));
+    // Build metadata (+26) is stripped before parsing: pub_semver's equality
+    // and comparison operators treat it as significant, so "0.8.0-beta.11"
+    // and "0.8.0-beta.11+26" would otherwise never compare equal even
+    // though they name the same release.
+    final normalized = tag.replaceFirst(RegExp(r'^v'), '').split('+').first;
+    return Version.parse(normalized);
   } catch (_) {
     return null;
   }
@@ -141,7 +147,8 @@ Future<UpdateStatus> fetchUpdateStatus(String currentVersion) async {
   }
 }
 
-String? _findChecksum(String checksumsText, String assetName) {
+@visibleForTesting
+String? findChecksum(String checksumsText, String assetName) {
   for (final line in checksumsText.split('\n')) {
     final trimmed = line.trim();
     if (trimmed.isEmpty) continue;
@@ -166,7 +173,11 @@ Future<void> downloadAndInstallUpdate(
   UpdateStatus status, {
   required void Function(int received, int total) onProgress,
 }) async {
-  if (!Platform.isAndroid) return;
+  if (!Platform.isAndroid) {
+    throw UnsupportedError(
+      'Automatic updates are only supported on Android.',
+    );
+  }
 
   final apkAsset = status.latestAssets.firstWhere(
     (a) =>
@@ -184,7 +195,12 @@ Future<void> downloadAndInstallUpdate(
   final checksumsResponse = await http
       .get(Uri.parse(checksumsAsset.browserDownloadUrl))
       .timeout(const Duration(seconds: 15));
-  final expectedHash = _findChecksum(checksumsResponse.body, apkAsset.name);
+  if (checksumsResponse.statusCode != 200) {
+    throw Exception(
+      'Failed to fetch checksums.txt (HTTP ${checksumsResponse.statusCode})',
+    );
+  }
+  final expectedHash = findChecksum(checksumsResponse.body, apkAsset.name);
   if (expectedHash == null) {
     throw Exception('No checksum entry for ${apkAsset.name}');
   }
@@ -192,53 +208,79 @@ Future<void> downloadAndInstallUpdate(
   final dir = await getTemporaryDirectory();
   final apkFile = File('${dir.path}/update.apk');
 
-  final client = http.Client();
-  try {
-    final request = http.Request(
-      'GET',
-      Uri.parse(apkAsset.browserDownloadUrl),
-    );
-    final streamedResponse = await client.send(request).timeout(
-      const Duration(seconds: 30),
-    );
-    final total = streamedResponse.contentLength ?? 0;
-    var received = 0;
-
-    final startedService = await DownloadService.startUpdate();
-    final sink = apkFile.openWrite();
-    var lastReportedPercent = -1;
-    try {
-      await for (final chunk in streamedResponse.stream.timeout(
-        const Duration(seconds: 30),
-      )) {
-        sink.add(chunk);
-        received += chunk.length;
-        onProgress(received, total);
-        if (total > 0) {
-          final percent = received * 100 ~/ total;
-          if (percent != lastReportedPercent) {
-            lastReportedPercent = percent;
-            await DownloadService.updateUpdateProgress(percent);
-          }
-        }
-      }
-      await sink.flush();
-    } finally {
-      await sink.close();
-      if (startedService) await DownloadService.stop();
+  // Reuse a file already downloaded and verified by a previous attempt: a
+  // user who cancelled the system installer shouldn't have to re-download
+  // the whole APK just to try again.
+  var haveValidApk = false;
+  if (await apkFile.exists()) {
+    final cachedDigest = await sha256.bind(apkFile.openRead()).first;
+    if (cachedDigest.toString().toLowerCase() == expectedHash.toLowerCase()) {
+      haveValidApk = true;
+    } else {
+      await apkFile.delete();
     }
-  } finally {
-    client.close();
   }
 
-  final digest = await sha256.bind(apkFile.openRead()).first;
+  if (!haveValidApk) {
+    final client = http.Client();
+    try {
+      final request = http.Request(
+        'GET',
+        Uri.parse(apkAsset.browserDownloadUrl),
+      );
+      final streamedResponse = await client.send(request).timeout(
+        const Duration(seconds: 30),
+      );
+      if (streamedResponse.statusCode != 200) {
+        throw Exception(
+          'Failed to download the update (HTTP ${streamedResponse.statusCode})',
+        );
+      }
+      final total = streamedResponse.contentLength ?? 0;
+      var received = 0;
 
-  if (digest.toString().toLowerCase() != expectedHash.toLowerCase()) {
-    await apkFile.delete();
-    throw Exception(
-      'Downloaded update failed integrity verification (checksum mismatch). '
-      'The file has been removed.',
-    );
+      final startedService = await DownloadService.startUpdate();
+      final sink = apkFile.openWrite();
+      var lastReportedPercent = -1;
+      var downloadFailed = false;
+      try {
+        await for (final chunk in streamedResponse.stream.timeout(
+          const Duration(seconds: 30),
+        )) {
+          sink.add(chunk);
+          received += chunk.length;
+          onProgress(received, total);
+          if (total > 0) {
+            final percent = received * 100 ~/ total;
+            if (percent != lastReportedPercent) {
+              lastReportedPercent = percent;
+              await DownloadService.updateUpdateProgress(percent);
+            }
+          }
+        }
+        await sink.flush();
+      } catch (_) {
+        downloadFailed = true;
+        rethrow;
+      } finally {
+        await sink.close();
+        if (startedService) await DownloadService.stop();
+        if (downloadFailed && await apkFile.exists()) {
+          await apkFile.delete();
+        }
+      }
+    } finally {
+      client.close();
+    }
+
+    final digest = await sha256.bind(apkFile.openRead()).first;
+    if (digest.toString().toLowerCase() != expectedHash.toLowerCase()) {
+      await apkFile.delete();
+      throw Exception(
+        'Downloaded update failed integrity verification (checksum mismatch). '
+        'The file has been removed.',
+      );
+    }
   }
 
   await Permission.requestInstallPackages.request();

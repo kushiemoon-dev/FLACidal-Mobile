@@ -59,4 +59,49 @@ void main() {
       expect(countVersionsBehind('0.9.0', tags), 2);
     },
   );
+
+  test('a running version with +build metadata still matches its tag', () {
+    // PackageInfo.version never actually includes +build (that's
+    // buildNumber, kept separate), but the format is real per the
+    // requirements, so this must not silently start hard-blocking a
+    // matching install just because build metadata differs.
+    final tags = ['v0.8.0-beta.11', 'v0.8.0-beta.10'];
+    expect(countVersionsBehind('0.8.0-beta.11+26', tags), 0);
+  });
+
+  group('findChecksum', () {
+    test('matches the standard two-space sha256sum format', () {
+      const checksums = 'abc123  flacidal-universal.apk\n'
+          'def456  flacidal-arm64.apk\n';
+      expect(
+        findChecksum(checksums, 'flacidal-universal.apk'),
+        'abc123',
+      );
+    });
+
+    test('strips a leading * (binary-mode marker)', () {
+      const checksums = 'abc123 *flacidal-universal.apk\n';
+      expect(findChecksum(checksums, 'flacidal-universal.apk'), 'abc123');
+    });
+
+    test('matches a path-prefixed entry by basename', () {
+      const checksums =
+          'abc123  artifacts/flacidal-windows/flacidal-universal.apk\n';
+      expect(
+        findChecksum(checksums, 'flacidal-universal.apk'),
+        'abc123',
+      );
+    });
+
+    test('handles CRLF line endings', () {
+      const checksums =
+          'abc123  flacidal-universal.apk\r\ndef456  flacidal-arm64.apk\r\n';
+      expect(findChecksum(checksums, 'flacidal-arm64.apk'), 'def456');
+    });
+
+    test('returns null when there is no entry for the asset', () {
+      const checksums = 'abc123  flacidal-arm64.apk\n';
+      expect(findChecksum(checksums, 'flacidal-universal.apk'), null);
+    });
+  });
 }

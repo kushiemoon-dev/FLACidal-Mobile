@@ -229,6 +229,16 @@ class SettingsPage extends ConsumerWidget {
               '${ref.watch(appVersionProvider).value ?? '…'} · Flutter + Go FFI',
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: const Text('Export config'),
+            onTap: () => _exportConfig(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.download_for_offline),
+            title: const Text('Import config'),
+            onTap: () => _importConfig(context, ref),
+          ),
         ],
       ),
     );
@@ -240,6 +250,52 @@ class SettingsPage extends ConsumerWidget {
     );
     if (result != null) {
       ref.read(downloadDirProvider.notifier).set(result);
+    }
+  }
+
+  Future<void> _exportConfig(BuildContext context, WidgetRef ref) async {
+    final dir = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Choose export location',
+    );
+    if (dir == null) return;
+    final path = '$dir/flacidal-config-export.json';
+    try {
+      ref.read(flacCoreProvider).callSync('exportConfig', {'path': path});
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Config exported to $path')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importConfig(BuildContext context, WidgetRef ref) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    final path = result?.files.single.path;
+    if (path == null) return;
+    try {
+      ref.read(flacCoreProvider).callSync('importConfig', {'path': path});
+      ref.invalidate(configProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Config imported')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import failed: $e')),
+        );
+      }
     }
   }
 

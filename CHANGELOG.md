@@ -90,10 +90,6 @@ The config round-trip (setting an endpoint → it actually reaching the download
 ### New features
 - **Deezer and Bandcamp support**: a new Deezer tab, URL support for both sources on the home screen, and a source-priority reorder option. The URL input's hint text was updated to mention both.
 
-## v0.5.0: 2026-05-22
-
-No functional changes in this release: version bump only.
-
 ## v0.4.7: 2026-05-18
 
 Internal cleanup only: removed unused imports and dead fields across 4 pages, and replaced the boilerplate counter widget test with a platform-agnostic placeholder.
@@ -103,22 +99,6 @@ Internal cleanup only: removed unused imports and dead fields across 4 pages, an
 ### Fixes
 - **Qobuz connection test always showed "Unknown error" even when the connection worked**: `testQobuzConnection` wasn't unwrapping the `result["result"]` field Go responses are wrapped in.
 - **Qobuz search results were queued through the Tidal download path**: now routed to `queueQobuzDownloads`.
-
-## v0.4.5: 2026-04-15
-
-No functional changes in this release: version bump only.
-
-## v0.4.4: 2026-04-13
-
-No functional changes in this release: version bump only.
-
-## v0.4.3: 2026-04-13
-
-No functional changes in this release: version bump only.
-
-## v0.4.2: 2026-04-13
-
-Build only: Go version bumped to 1.26 in CI.
 
 ## v0.4.1: 2026-04-13
 
@@ -145,10 +125,6 @@ No app functionality changed in this release: README showcase media was reworked
 ### Fixes
 - A native FFI event pointer wasn't freed after Dart copied its string, risking a use-after-free with `NativeCallable.listener`.
 - Quality picker offered invalid values; corrected to the real Tidal API options (`HI_RES`, `LOSSLESS`, `HIGH`), with `HI_RES` as the default instead of `LOSSLESS`.
-
-## v0.2.1: 2026-04-03
-
-Build only: iOS CI disabled (README updated with a call for iOS contributors); no Android-facing change.
 
 ## v0.2.0: 2026-04-03
 

@@ -16,6 +16,8 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      CORE_REF: v0.21.1
     steps:
       - name: Checkout flacidal-mobile
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -27,7 +29,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: kushiemoon-dev/flacidal-core
-          ref: v0.21.0
+          ref: ${{ env.CORE_REF }}
           path: flacidal-core
           token: ${{ secrets.CORE_ACCESS_TOKEN }}
 

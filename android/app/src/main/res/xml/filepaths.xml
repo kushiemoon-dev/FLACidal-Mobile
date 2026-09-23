@@ -1,0 +1,11 @@
+<!--
+  Android's manifest merger lets an app resource override a library resource
+  of the same name. This intentionally replaces open_file_android's own
+  res/xml/filepaths.xml (a root-path over the whole filesystem) with just
+  the app's cache dir, where lib/core/update_service.dart writes the
+  downloaded update APK. Renaming this file would silently widen what
+  OpenFile.open's FileProvider exposes back to the plugin's default.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="updates" path="." />
+</paths>

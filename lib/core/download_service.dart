@@ -52,4 +52,33 @@ class DownloadService {
   static Future<void> stop() async {
     await FlutterForegroundTask.stopService();
   }
+
+  /// Starts the foreground service for an update download, unless the
+  /// track queue already owns it. Returns true if this call started the
+  /// service (the caller must stop it when the update finishes), false if
+  /// it was already running and must be left alone: stopping it here would
+  /// kill the queue's own foreground protection out from under it.
+  static Future<bool> startUpdate() async {
+    if (!_initialized) await init();
+
+    if (await FlutterForegroundTask.isRunningService) return false;
+
+    if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+    }
+
+    await FlutterForegroundTask.startService(
+      serviceTypes: [ForegroundServiceTypes.dataSync],
+      notificationTitle: 'FLACidal',
+      notificationText: 'Downloading update...',
+    );
+    return true;
+  }
+
+  static Future<void> updateUpdateProgress(int percent) async {
+    await FlutterForegroundTask.updateService(
+      notificationTitle: 'FLACidal',
+      notificationText: 'Downloading update: $percent%',
+    );
+  }
 }

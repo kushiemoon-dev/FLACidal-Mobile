@@ -55,6 +55,9 @@ dependencies:
   google_fonts: ^8.0.2
   just_audio: ^0.9.43
   package_info_plus: ^9.0.1
+  pub_semver: ^2.1.4
+  open_file: ^4.0.0
+  crypto: ^3.0.0
 
 dev_dependencies:
   flutter_test:

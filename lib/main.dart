@@ -13,7 +13,11 @@ import 'core/flac_core.dart';
 import 'providers/queue_provider.dart';
 import 'providers/shared_url_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/update_provider.dart';
 import 'router/app_router.dart';
+import 'widgets/update_required_screen.dart';
+
+const _updateCheckThrottle = Duration(hours: 24);
 
 bool _isQueueBusy(Map<String, dynamic>? status) {
   if (status == null) return false;
@@ -67,6 +71,11 @@ void main() async {
   final container = ProviderContainer(
     overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
   );
+
+  // Cold-start check: an AsyncNotifierProvider runs on first read, no need
+  // to await it here. The root widget (FlacApp) watches the same provider
+  // once it's ready.
+  container.read(updateStatusProvider);
 
   // Wire the foreground service lifecycle to the global download queue:
   // start on the first active/queued job (any RPC path), stop only when
@@ -153,6 +162,28 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
       } catch (e) {
         debugPrint('Failed to persist the queue: $e');
       }
+    } else if (state == AppLifecycleState.resumed) {
+      _maybeCheckForUpdate();
+    }
+  }
+
+  static const _lastUpdateCheckKey = 'lastUpdateCheckAt';
+
+  Future<void> _maybeCheckForUpdate() async {
+    final prefs = ref.read(sharedPrefsProvider);
+    final lastCheckMs = prefs.getInt(_lastUpdateCheckKey);
+    final now = DateTime.now();
+    if (lastCheckMs != null) {
+      final elapsed = now.difference(
+        DateTime.fromMillisecondsSinceEpoch(lastCheckMs),
+      );
+      if (elapsed < _updateCheckThrottle) return;
+    }
+    await prefs.setInt(_lastUpdateCheckKey, now.millisecondsSinceEpoch);
+    try {
+      await ref.read(updateStatusProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint('Update check on resume failed: $e');
     }
   }
 
@@ -168,6 +199,13 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
       theme: FlacTheme.light(accentColor: accentColor),
       darkTheme: FlacTheme.dark(accentColor: accentColor),
       routerConfig: appRouter,
+      builder: (context, child) {
+        final status = ref.watch(updateStatusProvider).value;
+        if (status?.blocked == true) {
+          return UpdateRequiredScreen(status: status!);
+        }
+        return child!;
+      },
     );
   }
 }

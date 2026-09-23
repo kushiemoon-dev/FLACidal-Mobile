@@ -55,17 +55,11 @@
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
-        <!-- Exposes a downloaded update APK (cache dir) via a content:// URI
-             to the system installer intent — see lib/core/update_service.dart. -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileProvider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths" />
-        </provider>
+        <!-- No FileProvider declared here: the open_file plugin
+             (open_file_android) already registers its own
+             (${applicationId}.fileProvider.com.crazecoder.openfile), used by
+             OpenFile.open in lib/core/update_service.dart. See
+             res/xml/filepaths.xml for how its exposed paths are narrowed. -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

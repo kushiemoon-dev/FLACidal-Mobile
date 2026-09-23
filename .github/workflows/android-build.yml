@@ -53,6 +53,17 @@ jobs:
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Verify pubspec.yaml version matches tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.tag }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          PUBSPEC_VERSION=$(grep -m1 '^version:' flacidal-mobile/pubspec.yaml | sed -E 's/^version:\s*([^+]+).*/\1/' | tr -d '[:space:]')
+          if [ "$TAG_VERSION" != "$PUBSPEC_VERSION" ]; then
+            echo "::error::Git tag ($TAG_VERSION) does not match pubspec.yaml version ($PUBSPEC_VERSION)"
+            exit 1
+          fi
+
       # The app is intentionally signed with the debug key (android/app/build.gradle.kts),
       # not a real release key -- this repo distributes betas via GitHub Releases, not the
       # Play Store. Without this, every CI run generates a fresh throwaway debug.keystore,

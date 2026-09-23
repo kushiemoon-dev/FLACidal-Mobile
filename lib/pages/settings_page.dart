@@ -282,9 +282,32 @@ class SettingsPage extends ConsumerWidget {
     );
     final path = result?.files.single.path;
     if (path == null) return;
+    if (!context.mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Import Config'),
+        content: const Text(
+          'Importing will replace your current settings. Tidal, Soulseek, '
+          'and Qobuz credentials will need to be re-entered after import.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Import Anyway'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     try {
       ref.read(flacCoreProvider).callSync('importConfig', {'path': path});
       ref.invalidate(configProvider);
+      ref.invalidate(downloadOptionsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Config imported')),

@@ -33,6 +33,15 @@ jobs:
           path: flacidal-core
           token: ${{ secrets.CORE_ACCESS_TOKEN }}
 
+      - name: Verify Core ref is the latest tag
+        run: |
+          LATEST=$(git ls-remote --tags "https://x-access-token:${{ secrets.CORE_ACCESS_TOKEN }}@github.com/kushiemoon-dev/flacidal-core.git" \
+            | grep -o 'refs/tags/v[0-9.]*$' | sed 's#refs/tags/##' | sort -V | tail -1)
+          if [ "$LATEST" != "$CORE_REF" ]; then
+            echo "::error::flacidal-core pinned ref ($CORE_REF) is not the latest tag ($LATEST)"
+            exit 1
+          fi
+
       - name: Get version from tag
         id: version
         env:

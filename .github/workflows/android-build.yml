@@ -132,11 +132,17 @@ jobs:
           mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk FLACidal-${{ steps.version.outputs.tag }}-arm.apk
           mv build/app/outputs/flutter-apk/app-x86_64-release.apk FLACidal-${{ steps.version.outputs.tag }}-x86_64.apk
 
+      - name: Generate checksums
+        working-directory: flacidal-mobile
+        run: sha256sum FLACidal-*.apk > checksums.txt
+
       - name: Upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: FLACidal-${{ steps.version.outputs.tag }}
-          path: flacidal-mobile/FLACidal-*.apk
+          path: |
+            flacidal-mobile/FLACidal-*.apk
+            flacidal-mobile/checksums.txt
 
       - name: Generate changelog
         if: startsWith(github.ref, 'refs/tags/')
@@ -173,7 +179,9 @@ jobs:
         with:
           name: FLACidal Mobile ${{ steps.version.outputs.tag }}
           body_path: /tmp/changelog.md
-          files: flacidal-mobile/FLACidal-*.apk
+          files: |
+            flacidal-mobile/FLACidal-*.apk
+            flacidal-mobile/checksums.txt
           draft: false
           prerelease: ${{ contains(steps.version.outputs.tag, 'alpha') || contains(steps.version.outputs.tag, 'beta') }}
         env:

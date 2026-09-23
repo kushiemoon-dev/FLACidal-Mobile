@@ -259,6 +259,30 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   Future<void> _showConvertDialog(String filePath) async {
+    final core = ref.read(flacCoreProvider);
+    final available = core.callSync('isConverterAvailable');
+    final avail = available['result'] as bool? ?? false;
+    if (!avail) {
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('FFmpeg is unavailable'),
+            content: const Text(
+              'FFmpeg needs to be installed on this device for format conversion to work.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
     String format = 'mp3';
     int bitrate = 320;
 

@@ -340,7 +340,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  static const _formats = ['FLAC', 'M4A', 'ALAC'];
+  static const _formats = ['FLAC'];
 
   void _showFormatPicker(
     BuildContext context,

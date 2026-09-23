@@ -47,19 +47,37 @@ Version? _tryParse(String tag) {
   }
 }
 
-// countVersionsBehind returns how many entries of tagsNewestFirst (newest
-// first, as returned by the GitHub releases API) separate current from the
-// newest tag. Malformed tags are skipped. If current is not found in the
-// list (older than everything returned, or a non-semver value), it returns
-// tagsNewestFirst.length, trivially past forcedUpdateThreshold.
+// countVersionsBehind returns how many tags in tagsNewestFirst are strictly
+// newer than current by semver value, not by list position: GitHub orders
+// releases by creation date, so a backported patch can appear before a
+// later feature release. If current itself does not parse as a version
+// (e.g. a non-semver placeholder), it returns tagsNewestFirst.length,
+// trivially past forcedUpdateThreshold, since it can't be compared.
 int countVersionsBehind(String current, List<String> tagsNewestFirst) {
   final cur = _tryParse(current);
   if (cur == null) return tagsNewestFirst.length;
-  for (var i = 0; i < tagsNewestFirst.length; i++) {
-    final t = _tryParse(tagsNewestFirst[i]);
-    if (t != null && t == cur) return i;
+  var behind = 0;
+  for (final tag in tagsNewestFirst) {
+    final t = _tryParse(tag);
+    if (t != null && t > cur) behind++;
   }
-  return tagsNewestFirst.length;
+  return behind;
+}
+
+// _latestValidTag returns the highest valid semver tag in tags, or "" if
+// none is valid. Not necessarily tags.first: see countVersionsBehind.
+String _latestValidTag(List<String> tags) {
+  Version? best;
+  String bestTag = '';
+  for (final tag in tags) {
+    final v = _tryParse(tag);
+    if (v == null) continue;
+    if (best == null || v > best) {
+      best = v;
+      bestTag = tag;
+    }
+  }
+  return bestTag;
 }
 
 UpdateStatus _noUpdate(String currentVersion) => UpdateStatus(
@@ -112,7 +130,7 @@ Future<UpdateStatus> fetchUpdateStatus(String currentVersion) async {
     return UpdateStatus(
       hasUpdate: behind > 0,
       currentVersion: currentVersion,
-      latestVersion: tags.first.replaceFirst(RegExp(r'^v'), ''),
+      latestVersion: _latestValidTag(tags).replaceFirst(RegExp(r'^v'), ''),
       versionsBehind: behind,
       blocked: behind >= forcedUpdateThreshold,
       releaseUrl: latestRelease['html_url'] as String? ?? '',
@@ -163,9 +181,9 @@ Future<void> downloadAndInstallUpdate(
         throw Exception('No checksums.txt asset found in the latest release'),
   );
 
-  final checksumsResponse = await http.get(
-    Uri.parse(checksumsAsset.browserDownloadUrl),
-  );
+  final checksumsResponse = await http
+      .get(Uri.parse(checksumsAsset.browserDownloadUrl))
+      .timeout(const Duration(seconds: 15));
   final expectedHash = _findChecksum(checksumsResponse.body, apkAsset.name);
   if (expectedHash == null) {
     throw Exception('No checksum entry for ${apkAsset.name}');
@@ -174,24 +192,43 @@ Future<void> downloadAndInstallUpdate(
   final dir = await getTemporaryDirectory();
   final apkFile = File('${dir.path}/update.apk');
 
-  final request = http.Request('GET', Uri.parse(apkAsset.browserDownloadUrl));
-  final streamedResponse = await http.Client().send(request);
-  final total = streamedResponse.contentLength ?? 0;
-  var received = 0;
-
-  await DownloadService.start(total: total);
-  final sink = apkFile.openWrite();
+  final client = http.Client();
   try {
-    await for (final chunk in streamedResponse.stream) {
-      sink.add(chunk);
-      received += chunk.length;
-      onProgress(received, total);
-      await DownloadService.update(completed: received, total: total);
+    final request = http.Request(
+      'GET',
+      Uri.parse(apkAsset.browserDownloadUrl),
+    );
+    final streamedResponse = await client.send(request).timeout(
+      const Duration(seconds: 30),
+    );
+    final total = streamedResponse.contentLength ?? 0;
+    var received = 0;
+
+    final startedService = await DownloadService.startUpdate();
+    final sink = apkFile.openWrite();
+    var lastReportedPercent = -1;
+    try {
+      await for (final chunk in streamedResponse.stream.timeout(
+        const Duration(seconds: 30),
+      )) {
+        sink.add(chunk);
+        received += chunk.length;
+        onProgress(received, total);
+        if (total > 0) {
+          final percent = received * 100 ~/ total;
+          if (percent != lastReportedPercent) {
+            lastReportedPercent = percent;
+            await DownloadService.updateUpdateProgress(percent);
+          }
+        }
+      }
+      await sink.flush();
+    } finally {
+      await sink.close();
+      if (startedService) await DownloadService.stop();
     }
-    await sink.flush();
   } finally {
-    await sink.close();
-    await DownloadService.stop();
+    client.close();
   }
 
   final digest = await sha256.bind(apkFile.openRead()).first;

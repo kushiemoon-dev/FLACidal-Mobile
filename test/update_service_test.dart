@@ -28,7 +28,12 @@ void main() {
   });
 
   test('ignores a malformed tag in the list without throwing', () {
-    final tags = ['v0.8.0-beta.11', 'not-a-version', 'v0.8.0-beta.10'];
+    final tags = [
+      'v0.8.0-beta.12',
+      'not-a-version',
+      'v0.8.0-beta.11',
+      'v0.8.0-beta.10',
+    ];
     expect(countVersionsBehind('0.8.0-beta.10', tags), 2);
   });
 
@@ -36,4 +41,22 @@ void main() {
     final tags = ['v0.8.0-beta.11', 'v0.8.0-beta.10'];
     expect(countVersionsBehind('dev', tags), tags.length);
   });
+
+  test('current version newer than every tag is 0 behind', () {
+    // A local build or CI workflow_dispatch run ahead of the last tagged
+    // release must never be hard-blocked.
+    final tags = ['v0.8.0-beta.11', 'v0.8.0-beta.10'];
+    expect(countVersionsBehind('0.8.0-beta.12', tags), 0);
+  });
+
+  test(
+    'counts by version value, not list position (release list is by creation date)',
+    () {
+      // GitHub's releases list is ordered by creation date, not semver: a
+      // backport published after a newer feature release lands first in
+      // the list despite being the lower version.
+      final tags = ['v0.9.1', 'v0.9.2', 'v0.9.0'];
+      expect(countVersionsBehind('0.9.0', tags), 2);
+    },
+  );
 }

@@ -15,6 +15,7 @@ import 'providers/shared_url_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/update_provider.dart';
 import 'router/app_router.dart';
+import 'widgets/update_required_screen.dart';
 
 const _updateCheckThrottle = Duration(hours: 24);
 
@@ -198,6 +199,13 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
       theme: FlacTheme.light(accentColor: accentColor),
       darkTheme: FlacTheme.dark(accentColor: accentColor),
       routerConfig: appRouter,
+      builder: (context, child) {
+        final status = ref.watch(updateStatusProvider).value;
+        if (status?.blocked == true) {
+          return UpdateRequiredScreen(status: status!);
+        }
+        return child!;
+      },
     );
   }
 }

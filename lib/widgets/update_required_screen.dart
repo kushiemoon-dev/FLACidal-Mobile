@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/update_service.dart';
+import '../l10n/app_localizations.dart';
 
 /// Full-screen, non-dismissible: no close button, no back-navigation escape
 /// hatch beyond Android's own system back button (unlike the desktop
@@ -29,8 +31,11 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen> {
     });
 
     try {
+      final l = AppLocalizations.of(context);
       await downloadAndInstallUpdate(
         widget.status,
+        startText: l.notifUpdateDownloading,
+        progressText: l.notifUpdateProgress,
         onProgress: (received, total) {
           if (!mounted) return;
           setState(() {
@@ -49,9 +54,17 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen> {
     }
   }
 
+  Future<void> _openRelease() async {
+    final url = Uri.tryParse(widget.status.releaseUrl);
+    if (url == null) return;
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final progress = _total > 0 ? _received / _total : 0.0;
+    final migration = widget.status.requiresKeyMigration;
 
     return Scaffold(
       body: SafeArea(
@@ -63,16 +76,19 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Update Required',
+                  l.updateRequiredTitle,
                   style: Theme.of(context).textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'This version (${widget.status.currentVersion}) is '
-                  '${widget.status.versionsBehind} versions behind the '
-                  'latest release (${widget.status.latestVersion}). Update '
-                  'now to keep using the app.',
+                  migration
+                      ? l.updateMigrationBody(widget.status.latestVersion)
+                      : l.updateRequiredBody(
+                          widget.status.currentVersion,
+                          widget.status.versionsBehind,
+                          widget.status.latestVersion,
+                        ),
                   style: Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -86,7 +102,7 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen> {
                   Text(
                     _total > 0
                         ? '${(progress * 100).toStringAsFixed(0)}%'
-                        : 'Downloading update...',
+                        : l.updateDownloadingLong,
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
@@ -102,10 +118,18 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _downloading ? null : _handleUpdate,
-                  child: Text(_downloading ? 'Downloading...' : 'Update Now'),
-                ),
+                if (migration)
+                  FilledButton(
+                    onPressed: _openRelease,
+                    child: Text(l.updateOpenRelease),
+                  )
+                else
+                  FilledButton(
+                    onPressed: _downloading ? null : _handleUpdate,
+                    child: Text(
+                      _downloading ? l.updateDownloading : l.updateNow,
+                    ),
+                  ),
               ],
             ),
           ),

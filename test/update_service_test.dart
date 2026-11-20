@@ -104,4 +104,62 @@ void main() {
       expect(findChecksum(checksums, 'flacidal-universal.apk'), null);
     });
   });
+
+  group('requiresKeyMigration', () {
+    test('beta to 1.0 needs a reinstall (new signing key)', () {
+      expect(requiresKeyMigration('0.8.0-beta.13', '1.0.0'), isTrue);
+      expect(requiresKeyMigration('0.8.0-beta.12+27', 'v1.0.0'), isTrue);
+      expect(requiresKeyMigration('0.9.0', '1.2.0'), isTrue);
+    });
+
+    test('1.0 to a later release installs in place', () {
+      expect(requiresKeyMigration('1.0.0', '1.0.1'), isFalse);
+      expect(requiresKeyMigration('1.0.0+28', 'v1.1.0'), isFalse);
+    });
+
+    test('updates that stay below 1.0 are unchanged', () {
+      expect(requiresKeyMigration('0.8.0-beta.12', '0.8.0-beta.13'), isFalse);
+    });
+
+    test('unparsable versions never claim a migration', () {
+      expect(requiresKeyMigration('dev', '1.0.0'), isFalse);
+      expect(requiresKeyMigration('0.8.0', ''), isFalse);
+    });
+  });
+
+  group('UpdateStatus.requiresKeyMigration', () {
+    UpdateStatus status(String current, String latest) => UpdateStatus(
+      hasUpdate: true,
+      currentVersion: current,
+      latestVersion: latest,
+      versionsBehind: 3,
+      blocked: true,
+      releaseUrl: 'https://example.test/release',
+    );
+
+    test('derives from current and latest versions', () {
+      expect(status('0.8.0-beta.13', '1.0.0').requiresKeyMigration, isTrue);
+      expect(status('1.0.0', '1.0.1').requiresKeyMigration, isFalse);
+    });
+  });
+
+  test('downloadAndInstallUpdate refuses a migration before any network', () {
+    final s = UpdateStatus(
+      hasUpdate: true,
+      currentVersion: '0.8.0-beta.13',
+      latestVersion: '1.0.0',
+      versionsBehind: 3,
+      blocked: true,
+      releaseUrl: 'https://example.test/release',
+    );
+    expect(
+      downloadAndInstallUpdate(
+        s,
+        onProgress: (_, _) {},
+        startText: '',
+        progressText: (_) => '',
+      ),
+      throwsA(isA<KeyMigrationRequired>()),
+    );
+  });
 }

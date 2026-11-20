@@ -13,6 +13,31 @@ import 'download_service.dart';
 
 const forcedUpdateThreshold = 3;
 
+// 1.0 is signed with a new release key. Android refuses to install an APK
+// over an app signed with another key (INSTALL_FAILED_UPDATE_INCOMPATIBLE),
+// so going from a pre 1.0 build to 1.0 or later needs a manual reinstall.
+final _firstReleaseWithNewKey = Version(1, 0, 0);
+
+/// True when installing [latest] over [current] would hit the signing key
+/// change. Unparsable versions never claim a migration: nothing can be said.
+bool requiresKeyMigration(String current, String latest) =>
+    _crossesKeyChange(current, latest);
+
+bool _crossesKeyChange(String current, String latest) {
+  final cur = _tryParse(current);
+  final next = _tryParse(latest);
+  if (cur == null || next == null) return false;
+  return cur < _firstReleaseWithNewKey && next >= _firstReleaseWithNewKey;
+}
+
+/// Thrown instead of starting an install that Android would reject.
+class KeyMigrationRequired implements Exception {
+  const KeyMigrationRequired();
+
+  @override
+  String toString() => 'KeyMigrationRequired';
+}
+
 class UpdateAsset {
   final String name;
   final String browserDownloadUrl;
@@ -38,6 +63,9 @@ class UpdateStatus {
     required this.releaseUrl,
     this.latestAssets = const [],
   });
+
+  bool get requiresKeyMigration =>
+      _crossesKeyChange(currentVersion, latestVersion);
 }
 
 Version? _tryParse(String tag) {
@@ -172,7 +200,10 @@ String? findChecksum(String checksumsText, String assetName) {
 Future<void> downloadAndInstallUpdate(
   UpdateStatus status, {
   required void Function(int received, int total) onProgress,
+  required String startText,
+  required String Function(int percent) progressText,
 }) async {
+  if (status.requiresKeyMigration) throw const KeyMigrationRequired();
   if (!Platform.isAndroid) {
     throw UnsupportedError(
       'Automatic updates are only supported on Android.',
@@ -239,7 +270,7 @@ Future<void> downloadAndInstallUpdate(
       final total = streamedResponse.contentLength ?? 0;
       var received = 0;
 
-      final startedService = await DownloadService.startUpdate();
+      final startedService = await DownloadService.startUpdate(text: startText);
       final sink = apkFile.openWrite();
       var lastReportedPercent = -1;
       var downloadFailed = false;
@@ -254,7 +285,9 @@ Future<void> downloadAndInstallUpdate(
             final percent = received * 100 ~/ total;
             if (percent != lastReportedPercent) {
               lastReportedPercent = percent;
-              await DownloadService.updateUpdateProgress(percent);
+              await DownloadService.updateUpdateProgress(
+                text: progressText(percent),
+              );
             }
           }
         }

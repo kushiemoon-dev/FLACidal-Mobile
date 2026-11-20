@@ -368,9 +368,19 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Runner",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-force_load",
+					"$(SRCROOT)/Runner/libflacidal.a",
+					"-lresolv",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kushiemoon.flacidalMobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -547,9 +557,19 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Runner",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-force_load",
+					"$(SRCROOT)/Runner/libflacidal.a",
+					"-lresolv",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kushiemoon.flacidalMobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -569,9 +589,19 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Runner",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-force_load",
+					"$(SRCROOT)/Runner/libflacidal.a",
+					"-lresolv",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = dev.kushiemoon.flacidalMobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";

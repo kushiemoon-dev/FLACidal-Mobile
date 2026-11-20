@@ -1,10 +1,10 @@
 {
   "name": "FLACidal",
-  "identifier": "dev.kushiemoon.flacidal-mobile",
+  "identifier": "dev.kushiemoon.flacidalMobile",
   "apps": [
     {
       "name": "FLACidal",
-      "bundleIdentifier": "dev.kushiemoon.flacidal-mobile",
+      "bundleIdentifier": "dev.kushiemoon.flacidalMobile",
       "developerName": "kushiemoon",
       "subtitle": "Lossless FLAC downloader",
       "localizedDescription": "Download lossless FLAC music from Tidal. Built with Flutter + Go FFI.",

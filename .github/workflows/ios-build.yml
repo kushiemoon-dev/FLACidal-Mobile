@@ -1,12 +1,15 @@
 name: iOS Build
 
-# Disabled — no iOS signing contributor yet. See README.
-# Uncomment triggers below when an iOS contributor joins.
+# Builds an unsigned IPA for AltStore / SideStore. The Android release job is
+# independent: a failure here never blocks it.
 on:
-  # push:
-  #   tags:
-  #     - 'v*'
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-ios:
@@ -17,18 +20,22 @@ jobs:
         with:
           path: flacidal-mobile
 
+      - name: Read pinned Core version
+        id: core
+        run: echo "ref=$(tr -d '[:space:]' < flacidal-mobile/CORE_VERSION)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout flacidal-core
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: kushiemoon-dev/flacidal-core
-          ref: v0.21.0
+          ref: ${{ steps.core.outputs.ref }}
           path: flacidal-core
           token: ${{ secrets.CORE_ACCESS_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version: '1.24'
+          go-version-file: flacidal-core/go.mod
 
       - name: Setup Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -54,6 +61,15 @@ jobs:
       - name: Build unsigned IPA
         working-directory: flacidal-mobile
         run: flutter build ipa --no-codesign
+
+      - name: Verify libflacidal is linked into the app
+        working-directory: flacidal-mobile
+        run: |
+          BIN=build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Runner
+          nm -gU "$BIN" | grep -q FlacInit || {
+            echo "::error::FlacInit not found in $BIN, libflacidal.a was not linked"
+            exit 1
+          }
 
       - name: Rename IPA
         working-directory: flacidal-mobile

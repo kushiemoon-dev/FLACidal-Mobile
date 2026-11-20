@@ -12,8 +12,8 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.41+-02569B?style=flat-square&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 
-![Android](https://img.shields.io/badge/Android-5.0+-3DDC84?style=flat-square&logo=android&logoColor=white)
-![iOS](https://img.shields.io/badge/iOS-planned-555555?style=flat-square&logo=apple&logoColor=white)
+![Android](https://img.shields.io/badge/Android-7.0+-3DDC84?style=flat-square&logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-unsigned%20IPA-555555?style=flat-square&logo=apple&logoColor=white)
 
 </div>
 
@@ -63,9 +63,25 @@ Flutter handles the UI, while a shared Go backend reached through FFI drives the
 
 | Platform | File | Install |
 |----------|------|---------|
-| Android | `FLACidal.apk` | Direct install |
+| Android 7.0+ | `FLACidal-<version>-arm64.apk` (or `universal`) | Direct install, or add this repository as a source in [Obtainium](https://github.com/ImranR98/Obtainium) |
+| iOS | `FLACidal.ipa` (unsigned) | Sideload with AltStore or SideStore, source: `https://raw.githubusercontent.com/kushiemoon-dev/flacidal-mobile/main/altstore/apps.json` |
 
-> **iOS:** The codebase already supports iOS, but nobody with an Apple Developer account has stepped up yet to handle code signing and IPA distribution. Want to help? Check [Contributing](#contributing).
+Releases also ship a `checksums.txt` with the SHA256 of every APK.
+
+F-Droid is not planned.
+
+### Upgrading from the beta
+
+1.0 is signed with a new release key, so Android cannot install it over a beta
+(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Do this once:
+
+1. In the beta, open **Settings > About > Export config** and keep the file.
+2. Uninstall the beta.
+3. Install 1.0, then use **Import config**. Tidal, Soulseek and Qobuz
+   credentials are redacted in exports and must be entered again.
+
+From 1.0 on, updates install in place. The in-app updater detects this case and
+shows these steps instead of trying to install.
 
 ---
 
@@ -107,29 +123,40 @@ The Go backend handles networking, downloads, metadata, and storage, while Flutt
 
 ## Build from Source
 
-**Requirements:** Flutter 3.41+, Go 1.26+, Android NDK r29
+**Requirements:** Flutter 3.41+, Go 1.26.5+, Android NDK r29 (`ndk;29.0.14206865`)
+
+`libflacidal.so` is not stored in git. `CORE_VERSION` pins the Core tag
+(`v0.31.0` or newer); the build script refuses any other checkout.
 
 ```bash
-# 1. Build Go shared libraries
-cd flacidal-core
-make android-arm64
-make install-android
+# 1. Check out the pinned Core tag and build the three ABIs into jniLibs
+git -C ../flacidal-core checkout "$(cat CORE_VERSION)"
+tool/build_core.sh ../flacidal-core
 
-# 2. Build Flutter APK
-cd ../flacidal-mobile
+# 2. Build the Flutter APK
 flutter build apk --release
 ```
+
+A release build needs a signing key: provide `android/key.properties`
+(`storeFile`, `storePassword`, `keyAlias`, `keyPassword`) or the
+`ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and
+`ANDROID_KEY_PASSWORD` environment variables. Debug builds need neither.
+Without the libraries the build stops with an explicit message; use
+`-Pflacidal.abis=arm64-v8a` to require a single ABI during development.
 
 ### iOS (requires macOS + Xcode)
 
 ```bash
 cd flacidal-core
 make ios
-make install-ios
+cp build/ios/libflacidal.a build/ios/libflacidal.h ../flacidal-mobile/ios/Runner/
 
 cd ../flacidal-mobile
 flutter build ipa --no-codesign
 ```
+
+The Xcode project force-loads `ios/Runner/libflacidal.a`; the release workflow
+checks that `FlacInit` is present in the built app.
 
 ---
 
@@ -155,7 +182,13 @@ Nope, FLACidal handles authentication on its own.
 On Android: `/storage/emulated/0/Music/FLACidal/`, and it's configurable from Settings.
 
 **Is iOS supported?**
-It already compiles for iOS, though Apple signing still needs a contributor. In the meantime, build it yourself with `flutter build ipa --no-codesign` and sideload it through AltStore/SideStore. Contributions are very welcome.
+Releases include an unsigned IPA that you sideload with AltStore or SideStore. It is built by the iOS workflow on a macOS runner and has not been tested on a device by the maintainer.
+
+**Can I convert files to other formats?**
+Not on Android: FFmpeg is not bundled, and the convert screen says so instead of failing.
+
+**Why do I have to reinstall to get 1.0?**
+See [Upgrading from the beta](#upgrading-from-the-beta).
 
 **Does it work in the background?**
 It does: a foreground service keeps downloads going while the app sits minimized.
@@ -166,7 +199,7 @@ It does: a foreground service keeps downloads going while the app sits minimized
 
 Contributions are welcome. Here's where extra hands would help most:
 
-- **iOS build & signing**: needs someone with an Apple Developer account to set up code signing, TestFlight distribution, and the AltStore source. The Flutter + Go FFI codebase is already iOS-ready.
+- **iOS testing**: the unsigned IPA is built in CI only; reports from real devices are very welcome.
 - **Bug reports**: file an issue with steps to reproduce.
 
 ---

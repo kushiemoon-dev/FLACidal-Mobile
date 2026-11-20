@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.0.0: unreleased
+
+### Breaking
+- **New Android signing key.** Releases are now signed with a dedicated release key instead of the shared debug key, so 1.0 cannot be installed over a beta. Export your config, uninstall the beta, install 1.0, then import the config. The in-app updater shows these steps for pre 1.0 builds instead of trying to install. See the README section "Upgrading from the beta".
+
+### New features
+- **Language selector (English, French, German)** in Settings, stored in the Core `language` setting. Every screen is translated.
+- **Batch rename** from the Library (long press to select files): choose a template, preview the new names, then apply. Nothing is renamed without a preview for the current template, and rows with errors cannot be applied.
+- **Audio analyzer** for selected files (verdict, confidence, sample rate, bit depth, spectrum cutoff, tempo, key).
+- **Artist tag options**: "First artist only" and a custom artist separator.
+- **Extension activation prompt**: after installing an extension, the app lists the hosts it can contact and its permissions and asks before enabling it. Nothing is enabled implicitly.
+- **Unsigned iOS IPA** attached to releases for AltStore and SideStore.
+
+### Fixes
+- **Sources screen read keys Core never sends** (sources list, preferred source, Qobuz fields). It now reads the real response shapes, takes labels from Core (extension sources included), and shows the source order Core returns instead of an invented default. If Core cannot be read, an error with a Retry button is shown.
+- **"Fallback" switch relabelled "Quality fallback"**: it controls retrying at a lower quality, not switching sources (that is the source order).
+- **Source status** shows "Configured" or "Not configured" only; the app no longer claims a source is "OK" or "live".
+- **Extension registry**: sources you add are now browsed (partial results shown if one fails), and a registry failure no longer hides the "add source" section. Source URLs must be `https://github.com/<owner>/<repo>` and are checked before being sent to Core.
+- **Extension sign-in fields** never display stored secrets; configured fields show a "Configured" hint and an empty field keeps the stored value.
+- **Core errors are translated** (extension error codes) instead of showing raw exception text.
+- **Download queue restored twice at startup**: the extra restore call was removed, Core restores it itself.
+- **Credentials saved stale config**: saving Qobuz credentials or the preferred source now refreshes the cached config so later saves cannot overwrite them.
+- **Update progress spinner stayed on screen** while the activation prompt was open.
+
+### Build and tooling
+- Core is pinned in `CORE_VERSION` (v0.31.0). `libflacidal.so` is no longer tracked by git; `tool/build_core.sh` builds it and refuses an older or mismatched Core. A build without the libraries fails with an explicit message.
+- Release builds fail unless signing is configured; CI signs with a release keystore and rejects any APK carrying the Android debug certificate.
+- CI runs `flutter analyze --fatal-infos --fatal-warnings` and `flutter test --coverage` and fails on any error.
+- `palette_generator` (discontinued) replaced by the Flutter SDK; see `docs/dependencies.md` for the other dependencies.
+- The state of an endpoint (live or down) is not shown: Core does not expose it yet. This will be added when a Core release provides it.
+
 ## v0.8.0-beta.12: 2026-09-23
 
 ### New features

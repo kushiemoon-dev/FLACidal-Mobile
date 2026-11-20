@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/core_errors.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/core_provider.dart';
+import 'extensions/add_source_dialog.dart';
+import 'extensions/auth_dialog.dart';
+import 'extensions/browse_tab.dart';
+import 'extensions/enable_prompt.dart';
+import 'extensions/installed_tab.dart';
+import 'extensions/registry_merge.dart';
 
 class ExtensionsPage extends ConsumerStatefulWidget {
   const ExtensionsPage({super.key});
@@ -13,311 +21,283 @@ class ExtensionsPage extends ConsumerStatefulWidget {
 class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  List<dynamic> _installed = [];
-  List<dynamic> _registry = [];
+  List<Map<String, dynamic>> _installed = [];
+  List<Map<String, dynamic>> _registry = [];
   List<String> _sources = [];
   bool _loadingInstalled = true;
   bool _loadingRegistry = false;
   final Set<String> _installingIds = {};
-
-  // Filters used on the Browse tab
-  String _searchQuery = '';
-  String _selectedCategory = 'All';
-  final _searchController = TextEditingController();
-
-  static const _categories = [
-    'All',
-    'Download',
-    'Metadata',
-    'Lyrics',
-    'Utility',
-  ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadInstalled();
+    _loadSources();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
+  List<Map<String, dynamic>> _readInstalled() => [
+    for (final e
+        in ref.read(flacCoreProvider).callResult('getExtensions')
+                as List<dynamic>? ??
+            const [])
+      if (e is Map) Map<String, dynamic>.from(e),
+  ];
+
+  List<String> _readSources() => [
+    for (final s
+        in ref.read(flacCoreProvider).callResult('getExtensionSources')
+                as List<dynamic>? ??
+            const [])
+      s.toString(),
+  ];
+
   Future<void> _loadInstalled() async {
     try {
-      final core = ref.read(flacCoreProvider);
-      final result = core.callSync('getExtensions');
-      setState(() {
-        _installed = result['result'] as List<dynamic>? ?? [];
-        _loadingInstalled = false;
-      });
-    } catch (e) {
-      setState(() => _loadingInstalled = false);
+      final installed = _readInstalled();
+      if (mounted) {
+        setState(() {
+          _installed = installed;
+          _loadingInstalled = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingInstalled = false);
     }
   }
 
-  Future<void> _loadRegistry() async {
-    setState(() => _loadingRegistry = true);
+  void _loadSources() {
     try {
-      final core = ref.read(flacCoreProvider);
-      final result = await core.callAsync('getExtensionRegistry', {'url': ''});
-      final sourcesResult = core.callSync('getExtensionSources');
-      setState(() {
-        _registry = result['result'] as List<dynamic>? ?? [];
-        _sources =
-            (sourcesResult['result'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-        _loadingRegistry = false;
-      });
-    } catch (e) {
-      setState(() {
-        _loadingRegistry = false;
-        _registry = [];
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to load the registry: $e')),
-        );
-      }
+      _sources = _readSources();
+    } catch (_) {
+      // The Browse tab still works with the default registry alone.
     }
+  }
+
+  /// Default registry first, then each added source. Calls run in parallel and
+  /// a failing source never hides the others.
+  Future<void> _loadRegistry() async {
+    final l = AppLocalizations.of(context);
+    final core = ref.read(flacCoreProvider);
+    setState(() => _loadingRegistry = true);
+
+    List<String> sources;
+    try {
+      sources = _readSources();
+    } catch (_) {
+      sources = _sources;
+    }
+
+    final urls = ['', ...sources];
+    final outcomes = await Future.wait(
+      urls.map((url) async {
+        try {
+          final result = await core.callResultAsync('getExtensionRegistry', {
+            'url': url,
+          });
+          return (entries: registryEntries(result), error: null as Object?);
+        } catch (e) {
+          return (entries: <Map<String, dynamic>>[], error: e as Object?);
+        }
+      }),
+    );
+
+    if (!mounted) return;
+    final failures = <String>[
+      for (var i = 0; i < outcomes.length; i++)
+        if (outcomes[i].error != null)
+          i == 0
+              ? l.extRegistryFailed(describeCoreError(l, outcomes[i].error!))
+              : l.extRegistrySourceFailed(
+                  urls[i],
+                  describeCoreError(l, outcomes[i].error!),
+                ),
+    ];
+    setState(() {
+      _registry = mergeRegistries([for (final o in outcomes) o.entries]);
+      _sources = sources;
+      _loadingRegistry = false;
+    });
+    if (failures.isNotEmpty) _snack(failures.join('\n'));
   }
 
   Future<void> _installExtension(String id, String url) async {
+    final l = AppLocalizations.of(context);
+    final core = ref.read(flacCoreProvider);
     setState(() => _installingIds.add(id));
+    List<Map<String, dynamic>> installed;
     try {
-      final core = ref.read(flacCoreProvider);
-      await core.callAsync('installExtension', {'url': url});
-      _loadInstalled();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Extension added')));
-      }
+      await core.callResultAsync('installExtension', {'url': url});
+      installed = _readInstalled();
+      if (mounted) setState(() => _installed = installed);
+      _snack(l.extAdded);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Installation failed: $e')));
-      }
+      _snack(l.extInstallFailed(describeCoreError(l, e)));
+      return;
     } finally {
       if (mounted) setState(() => _installingIds.remove(id));
     }
+    // After the spinner is gone, so it does not keep spinning behind the dialog.
+    await _promptEnable(id, installed);
+  }
+
+  /// A freshly installed extension is disabled. Ask before enabling it, using
+  /// `hosts` from `getExtensions` (the install result only has the manifest).
+  Future<void> _promptEnable(
+    String id,
+    List<Map<String, dynamic>> installed,
+  ) async {
+    final ext = installed.where((e) {
+      final manifest = e['manifest'];
+      return manifest is Map && manifest['id'] == id;
+    }).firstOrNull;
+    if (ext == null || ext['enabled'] == true || !mounted) return;
+
+    final manifest = ext['manifest'] as Map<String, dynamic>;
+    final accepted = await showEnablePrompt(
+      context,
+      name: manifest['name'] as String? ?? id,
+      hosts: [for (final h in ext['hosts'] as List<dynamic>? ?? const []) '$h'],
+      permissions: [
+        for (final p in manifest['permissions'] as List<dynamic>? ?? const [])
+          '$p',
+      ],
+    );
+    if (accepted) await _toggleEnabled(id, true);
   }
 
   Future<void> _uninstall(String id) async {
+    final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Uninstall Extension'),
-        content: Text('Remove the "$id" extension?'),
+        title: Text(l.extUninstallTitle),
+        content: Text(l.extUninstallConfirm(id)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Uninstall'),
+            child: Text(l.extUninstall),
           ),
         ],
       ),
     );
-    if (confirm == true) {
-      try {
-        ref.read(flacCoreProvider).callSync('uninstallExtension', {'id': id});
-        _loadInstalled();
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
-        }
-      }
+    if (confirm != true) return;
+    try {
+      ref.read(flacCoreProvider).callSync('uninstallExtension', {'id': id});
+      await _loadInstalled();
+    } catch (e) {
+      _snack(l.extActionFailed(describeCoreError(l, e)));
     }
   }
 
   Future<void> _toggleEnabled(String id, bool enabled) async {
+    final l = AppLocalizations.of(context);
     try {
       ref.read(flacCoreProvider).callSync('enableExtension', {
         'id': id,
         'enabled': enabled,
       });
-      _loadInstalled();
+      await _loadInstalled();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
-      }
+      _snack(l.extActionFailed(describeCoreError(l, e)));
     }
   }
 
   Future<void> _configure(Map<String, dynamic> ext) async {
+    final l = AppLocalizations.of(context);
     final manifest = ext['manifest'] as Map<String, dynamic>? ?? {};
     final id = manifest['id'] as String? ?? '';
-    final authFields = manifest['authFields'] as List<dynamic>? ?? [];
-    final currentAuth = ext['authData'] as Map<String, dynamic>? ?? {};
-
-    if (authFields.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nothing to configure here')),
-      );
+    final fields = [
+      for (final f in manifest['authFields'] as List<dynamic>? ?? const [])
+        if (f is Map) Map<String, dynamic>.from(f),
+    ];
+    if (fields.isEmpty) {
+      _snack(l.extNothingToConfigure);
       return;
     }
 
-    final controllers = <String, TextEditingController>{};
-    for (final field in authFields) {
-      final f = field as Map<String, dynamic>;
-      final key = f['key'] as String? ?? '';
-      controllers[key] = TextEditingController(
-        text: currentAuth[key]?.toString() ?? '',
-      );
-    }
-
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Configure ${manifest['name'] ?? id}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: authFields.map((field) {
-            final f = field as Map<String, dynamic>;
-            final key = f['key'] as String? ?? '';
-            final label = f['label'] as String? ?? key;
-            final isPassword = f['type'] == 'password';
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: TextField(
-                controller: controllers[key],
-                decoration: InputDecoration(
-                  labelText: label,
-                  border: const OutlineInputBorder(),
-                ),
-                obscureText: isPassword,
-              ),
-            );
-          }).toList(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final data = await showAuthDialog(
+      context,
+      title: l.extConfigureTitle('${manifest['name'] ?? id}'),
+      fields: fields,
+      authSet: ext['authSet'] as Map<String, dynamic>? ?? const {},
     );
+    // Cancelled, or nothing typed: Core keeps the stored values either way.
+    if (data == null || data.isEmpty) return;
 
-    if (saved == true) {
-      final data = <String, String>{};
-      for (final entry in controllers.entries) {
-        data[entry.key] = entry.value.text;
-      }
-      try {
-        ref.read(flacCoreProvider).callSync('setExtensionAuth', {
-          'id': id,
-          'data': data,
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Configuration updated')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
-        }
-      }
-    }
-
-    for (final c in controllers.values) {
-      c.dispose();
+    try {
+      ref.read(flacCoreProvider).callSync('setExtensionAuth', {
+        'id': id,
+        'data': data,
+      });
+      await _loadInstalled();
+      _snack(l.extConfigUpdated);
+    } catch (e) {
+      _snack(l.extActionFailed(describeCoreError(l, e)));
     }
   }
 
   Future<void> _addSource() async {
-    final controller = TextEditingController();
-    final url = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Extension Source'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'GitHub Repository URL',
-            hintText: 'https://github.com/owner/repo',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-
-    if (url != null && url.isNotEmpty) {
-      try {
-        ref.read(flacCoreProvider).callSync('addExtensionSource', {'url': url});
-        setState(() => _sources.add(url));
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('New source added')));
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
-        }
-      }
+    final l = AppLocalizations.of(context);
+    final url = await showAddSourceDialog(context);
+    if (url == null) return;
+    try {
+      ref.read(flacCoreProvider).callSync('addExtensionSource', {'url': url});
+      setState(() => _sources = [..._sources, url]);
+      _snack(l.extSourceAdded);
+      await _loadRegistry();
+    } catch (e) {
+      _snack(l.extSourceAddFailed(describeCoreError(l, e)));
     }
   }
 
   Future<void> _removeSource(String url) async {
+    final l = AppLocalizations.of(context);
     try {
       ref.read(flacCoreProvider).callSync('removeExtensionSource', {
         'url': url,
       });
-      setState(() => _sources.remove(url));
+      setState(() => _sources = [..._sources.where((s) => s != url)]);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
-      }
+      _snack(l.extSourceRemoveFailed(describeCoreError(l, e)));
     }
   }
 
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Map<String, String> get _installedVersions => {
+    for (final e in _installed)
+      if (e['manifest'] is Map)
+        '${(e['manifest'] as Map)['id']}':
+            '${(e['manifest'] as Map)['version'] ?? ''}',
+  };
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Extensions'),
+        title: Text(l.extTitle),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Installed'),
-            Tab(text: 'Browse'),
+          tabs: [
+            Tab(text: l.extTabInstalled),
+            Tab(text: l.extTabBrowse),
           ],
           onTap: (i) {
             if (i == 1 && _registry.isEmpty && !_loadingRegistry) {
@@ -328,319 +308,26 @@ class _ExtensionsPageState extends ConsumerState<ExtensionsPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildInstalledTab(), _buildRegistryTab()],
-      ),
-    );
-  }
-
-  Widget _buildInstalledTab() {
-    if (_loadingInstalled) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_installed.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.extension, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Nothing installed yet'),
-            SizedBox(height: 8),
-            Text(
-              'Check the registry to find extensions',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadInstalled,
-      child: ListView.builder(
-        itemCount: _installed.length,
-        itemBuilder: (context, i) {
-          final ext = _installed[i] as Map<String, dynamic>;
-          final manifest = ext['manifest'] as Map<String, dynamic>? ?? {};
-          final id = manifest['id'] as String? ?? '';
-          final name = manifest['name'] as String? ?? id;
-          final version = manifest['version'] as String? ?? '';
-          final author = manifest['author'] as String? ?? '';
-          final enabled = ext['enabled'] as bool? ?? true;
-          final caps =
-              (manifest['capabilities'] as List<dynamic>?)
-                  ?.map((c) => c.toString())
-                  .join(', ') ??
-              '';
-          final permissions =
-              (manifest['permissions'] as List<dynamic>?)
-                  ?.map((p) => p.toString())
-                  .toList() ??
-              [];
-
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: enabled
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Colors.grey[800],
-                child: Icon(
-                  Icons.extension,
-                  color: enabled
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey,
-                ),
-              ),
-              title: Text(name),
-              subtitle: permissions.isEmpty
-                  ? Text('$author · v$version · $caps')
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('$author · v$version · $caps'),
-                        Text('Permissions: ${permissions.join(", ")}'),
-                      ],
-                    ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Switch(
-                    value: enabled,
-                    onChanged: (v) => _toggleEnabled(id, v),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (v) {
-                      switch (v) {
-                        case 'configure':
-                          _configure(ext);
-                        case 'uninstall':
-                          _uninstall(id);
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                        value: 'configure',
-                        child: Text('Configure'),
-                      ),
-                      PopupMenuItem(
-                        value: 'uninstall',
-                        child: Text('Uninstall'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  List<dynamic> get _filteredRegistry {
-    return _registry.where((item) {
-      final m = item as Map<String, dynamic>;
-      final name = (m['name'] as String? ?? '').toLowerCase();
-      final desc = (m['description'] as String? ?? '').toLowerCase();
-      final category = (m['category'] as String? ?? '').toLowerCase();
-      final query = _searchQuery.toLowerCase();
-
-      if (query.isNotEmpty && !name.contains(query) && !desc.contains(query)) {
-        return false;
-      }
-
-      if (_selectedCategory != 'All' &&
-          category != _selectedCategory.toLowerCase()) {
-        return false;
-      }
-
-      return true;
-    }).toList();
-  }
-
-  Widget _buildRegistryTab() {
-    if (_loadingRegistry) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_registry.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_download, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text('Nothing available right now'),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: _loadRegistry,
-              child: const Text('Refresh'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final installedVersions = {
-      for (final e in _installed)
-        ((e as Map<String, dynamic>)['manifest'] as Map<String, dynamic>? ??
-                        {})['id']
-                    as String? ??
-                '':
-            ((e)['manifest'] as Map<String, dynamic>? ?? {})['version']
-                as String? ??
-            '',
-    };
-
-    final filtered = _filteredRegistry;
-
-    return RefreshIndicator(
-      onRefresh: _loadRegistry,
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Find extensions...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
-                ),
-                onChanged: (v) => setState(() => _searchQuery = v),
-              ),
-            ),
+        children: [
+          InstalledTab(
+            loading: _loadingInstalled,
+            installed: _installed,
+            onRefresh: _loadInstalled,
+            onToggle: _toggleEnabled,
+            onConfigure: _configure,
+            onUninstall: _uninstall,
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Wrap(
-                spacing: 8,
-                children: _categories.map((cat) {
-                  final selected = _selectedCategory == cat;
-                  return FilterChip(
-                    label: Text(cat),
-                    selected: selected,
-                    onSelected: (_) => setState(() => _selectedCategory = cat),
-                  );
-                }).toList(),
-              ),
-            ),
+          BrowseTab(
+            loading: _loadingRegistry,
+            registry: _registry,
+            installedVersions: _installedVersions,
+            installingIds: _installingIds,
+            sources: _sources,
+            onRefresh: _loadRegistry,
+            onInstall: _installExtension,
+            onAddSource: _addSource,
+            onRemoveSource: _removeSource,
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, i) {
-              final item = filtered[i] as Map<String, dynamic>;
-              final id = item['id'] as String? ?? '';
-              final name = item['name'] as String? ?? id;
-              final desc = item['description'] as String? ?? '';
-              final version = item['latestVersion'] as String? ?? '';
-              final downloadURL = item['downloadURL'] as String? ?? '';
-              final installedVersion = installedVersions[id];
-              final installed = installedVersion != null;
-              final hasUpdate =
-                  installed &&
-                  installedVersion != version &&
-                  version.isNotEmpty;
-              final permissions =
-                  (item['permissions'] as List<dynamic>?)
-                      ?.map((p) => p.toString())
-                      .toList() ??
-                  [];
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.extension)),
-                  title: Text(name),
-                  subtitle: Text(
-                    '$desc${version.isNotEmpty ? '\nv$version' : ''}'
-                    '${permissions.isNotEmpty ? '\nPermissions: ${permissions.join(", ")}' : ''}',
-                  ),
-                  isThreeLine: desc.isNotEmpty || permissions.isNotEmpty,
-                  trailing: _installingIds.contains(id)
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : hasUpdate
-                      ? FilledButton(
-                          onPressed: downloadURL.isNotEmpty
-                              ? () => _installExtension(id, downloadURL)
-                              : null,
-                          child: const Text('Update'),
-                        )
-                      : installed
-                      ? const Chip(label: Text('Installed'))
-                      : FilledButton(
-                          onPressed: downloadURL.isNotEmpty
-                              ? () => _installExtension(id, downloadURL)
-                              : null,
-                          child: const Text('Install'),
-                        ),
-                ),
-              );
-            }, childCount: filtered.length),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
-              child: Row(
-                children: [
-                  Text(
-                    'Sources',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: _addSource,
-                    tooltip: 'Add source',
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_sources.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Text(
-                  'No extra sources set up',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-            ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, i) {
-              final url = _sources[i];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                child: ListTile(
-                  leading: const Icon(Icons.source),
-                  title: Text(url, style: const TextStyle(fontSize: 13)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _removeSource(url),
-                  ),
-                ),
-              );
-            }, childCount: _sources.length),
-          ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
         ],
       ),
     );

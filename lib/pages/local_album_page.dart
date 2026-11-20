@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class LocalAlbumPage extends ConsumerStatefulWidget {
   final String albumName;
@@ -80,22 +81,23 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
   }
 
   Future<void> _deleteSelected() async {
+    final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Files'),
-        content: Text('Remove ${_selected.length} selected file(s)?'),
+        title: Text(l.deleteFilesTitle),
+        content: Text(l.deleteFilesBody(_selected.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(l.delete),
           ),
         ],
       ),
@@ -116,8 +118,9 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
       _selectionMode = false;
       _selected = {};
     });
-    if (mounted)
+    if (mounted) {
       Navigator.pop(context, true); // Let the caller know a refresh is needed
+    }
   }
 
   @override
@@ -138,7 +141,9 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectionMode ? '${_selected.length} selected' : widget.albumName,
+          _selectionMode
+              ? AppLocalizations.of(context).librarySelected(_selected.length)
+              : widget.albumName,
         ),
         actions: [
           if (_selectionMode) ...[
@@ -212,7 +217,7 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
                         ],
                         const SizedBox(height: 4),
                         Text(
-                          '${widget.tracks.length} tracks${quality.isNotEmpty ? ' · $quality' : ''}',
+                          '${AppLocalizations.of(context).tracksCount(widget.tracks.length)}${quality.isNotEmpty ? ' · $quality' : ''}',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: cs.onSurface.withValues(alpha: 0.5),
@@ -235,7 +240,7 @@ class _LocalAlbumPageState extends ConsumerState<LocalAlbumPage> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                     child: Text(
-                      'Disc $discNum',
+                      AppLocalizations.of(context).discLabel(int.tryParse('$discNum') ?? 0),
                       style: Theme.of(
                         context,
                       ).textTheme.titleSmall?.copyWith(color: cs.primary),

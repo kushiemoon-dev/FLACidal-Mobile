@@ -4,15 +4,17 @@ import 'package:http/http.dart' as http;
 class URLResolver {
   static const _odesliBase = 'https://api.song.link/v1-alpha.1/links';
 
-  static Future<ResolvedURL?> resolve(String url) async {
+  /// [client] exists so tests can inject a mock; production uses a fresh one.
+  static Future<ResolvedURL?> resolve(String url, {http.Client? client}) async {
     // Already a Tidal or Qobuz URL: null here means no resolution needed, not failure
     final lower = url.toLowerCase();
     if (lower.contains('tidal.com') || lower.contains('qobuz.com')) {
       return null;
     }
 
+    final httpClient = client ?? http.Client();
     try {
-      final response = await http
+      final response = await httpClient
           .get(Uri.parse('$_odesliBase?url=${Uri.encodeComponent(url)}'))
           .timeout(const Duration(seconds: 10));
 
@@ -45,6 +47,8 @@ class URLResolver {
       );
     } catch (_) {
       return null;
+    } finally {
+      if (client == null) httpClient.close();
     }
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/error_text.dart';
 
 class ConversionPage extends ConsumerStatefulWidget {
   final List<String> filePaths;
@@ -66,14 +68,14 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Conversion finished')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).convertDone)));
       }
     } catch (e) {
       setState(() => _converting = false);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -81,7 +83,7 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Convert')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).convertTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : !_converterAvailable
@@ -91,18 +93,18 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
   }
 
   Widget _buildUnavailable() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.warning, size: 64, color: Colors.orange),
-          SizedBox(height: 16),
-          Text('FFmpeg is unavailable'),
-          SizedBox(height: 8),
+          const Icon(Icons.warning, size: 64, color: Colors.orange),
+          const SizedBox(height: 16),
+          Text(AppLocalizations.of(context).convertFfmpegUnavailable),
+          const SizedBox(height: 8),
           Text(
-            'FFmpeg needs to be installed on this device for format conversion to work.',
+            AppLocalizations.of(context).convertFfmpegBody,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: const TextStyle(color: Colors.grey),
           ),
         ],
       ),
@@ -120,7 +122,7 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${widget.filePaths.length} file(s) selected',
+                  AppLocalizations.of(context).convertFilesSelected(widget.filePaths.length),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -136,7 +138,7 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
                     ),
                 if (widget.filePaths.length > 5)
                   Text(
-                    '... and ${widget.filePaths.length - 5} more',
+                    AppLocalizations.of(context).convertMore(widget.filePaths.length - 5),
                     style: const TextStyle(color: Colors.grey),
                   ),
               ],
@@ -145,7 +147,10 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
         ),
         const SizedBox(height: 16),
 
-        Text('Output Format', style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          AppLocalizations.of(context).convertOutputFormat,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
           segments: const [
@@ -159,7 +164,7 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
         const SizedBox(height: 16),
 
         Text(
-          'Bitrate: $_bitrate kbps',
+          AppLocalizations.of(context).convertBitrate(_bitrate),
           style: Theme.of(context).textTheme.titleSmall,
         ),
         Slider(
@@ -167,16 +172,14 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
           min: 128,
           max: 320,
           divisions: 6,
-          label: '$_bitrate kbps',
+          label: AppLocalizations.of(context).convertKbps(_bitrate),
           onChanged: (v) => setState(() => _bitrate = v.round()),
         ),
         const SizedBox(height: 8),
 
         SwitchListTile(
-          title: const Text('Delete original files'),
-          subtitle: const Text(
-            'Deletes the original FLAC once conversion finishes',
-          ),
+          title: Text(AppLocalizations.of(context).convertDeleteOriginals),
+          subtitle: Text(AppLocalizations.of(context).convertDeleteOriginalsHint),
           value: _deleteSource,
           onChanged: (v) => setState(() => _deleteSource = v),
         ),
@@ -191,7 +194,9 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.transform),
-          label: Text(_converting ? 'Converting...' : 'Convert'),
+          label: Text(
+            _converting ? AppLocalizations.of(context).convertConverting : AppLocalizations.of(context).convertTitle,
+          ),
         ),
 
         if (_result != null) ...[
@@ -201,7 +206,7 @@ class _ConversionPageState extends ConsumerState<ConversionPage> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Conversion finished',
+                AppLocalizations.of(context).convertDone,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),

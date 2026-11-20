@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
+import '../core/core_errors.dart';
+import '../l10n/app_localizations.dart';
 
 class LyricsPage extends ConsumerStatefulWidget {
   final String? filePath;
@@ -74,7 +76,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
         });
       } else {
         setState(() {
-          _error = 'Missing both a file path and track info.';
+          _error = AppLocalizations.of(context).lyricsMissingInput;
           _loading = false;
         });
         return;
@@ -93,7 +95,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     }
@@ -102,16 +104,14 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
   Future<void> _embedLyrics() async {
     if (widget.filePath == null || widget.filePath!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Lyrics can't be embedded without a file path."),
-        ),
+        SnackBar(content: Text(AppLocalizations.of(context).lyricsNoFilePath)),
       );
       return;
     }
 
     if (_plainLyrics.isEmpty && _syncedLyrics.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("There's nothing to embed.")),
+        SnackBar(content: Text(AppLocalizations.of(context).lyricsNothingToEmbed)),
       );
       return;
     }
@@ -129,13 +129,15 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Lyrics embedded.')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).lyricsEmbedded)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to embed lyrics: $e')));
+        ).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).lyricsEmbedFailed(describeCoreError(AppLocalizations.of(context), e)))),
+        );
       }
     } finally {
       if (mounted) setState(() => _embedding = false);
@@ -147,7 +149,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
     final theme = Theme.of(context);
     final displayTitle = _trackName.isNotEmpty
         ? _trackName
-        : (widget.title ?? 'Lyrics');
+        : (widget.title ?? AppLocalizations.of(context).lyricsTitle);
     final displayArtist = _artistName.isNotEmpty
         ? _artistName
         : (widget.artist ?? '');
@@ -189,9 +191,9 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Chip(
                 avatar: const Icon(Icons.music_note, size: 14),
-                label: const Text(
-                  'Instrumental',
-                  style: TextStyle(fontSize: 10),
+                label: Text(
+                  AppLocalizations.of(context).lyricsInstrumental,
+                  style: const TextStyle(fontSize: 10),
                 ),
                 visualDensity: VisualDensity.compact,
               ),
@@ -208,7 +210,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
                   )
                 : IconButton(
                     icon: const Icon(Icons.save_alt),
-                    tooltip: 'Embed lyrics into the FLAC',
+                    tooltip: AppLocalizations.of(context).lyricsEmbedTooltip,
                     onPressed: (_plainLyrics.isEmpty && _syncedLyrics.isEmpty)
                         ? null
                         : _embedLyrics,
@@ -216,9 +218,9 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Synced'),
-            Tab(text: 'Plain'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context).lyricsTabSynced),
+            Tab(text: AppLocalizations.of(context).lyricsTabPlain),
           ],
         ),
       ),
@@ -253,7 +255,7 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
               FilledButton.icon(
                 onPressed: _fetchLyrics,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(AppLocalizations.of(context).retry),
               ),
             ],
           ),
@@ -274,15 +276,15 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
             const SizedBox(height: 16),
             Text(
               _instrumental
-                  ? 'This one looks to be instrumental.'
-                  : "Couldn't find lyrics for this track.",
+                  ? AppLocalizations.of(context).lyricsLooksInstrumental
+                  : AppLocalizations.of(context).lyricsNotFound,
             ),
             const SizedBox(height: 24),
             if (!_instrumental)
               FilledButton.icon(
                 onPressed: _fetchLyrics,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(AppLocalizations.of(context).retry),
               ),
           ],
         ),
@@ -297,10 +299,10 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
 
   Widget _buildSyncedTab(ThemeData theme) {
     if (_syncedLyrics.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No synced lyrics on hand.',
-          style: TextStyle(color: Colors.grey),
+          AppLocalizations.of(context).lyricsNoSynced,
+          style: const TextStyle(color: Colors.grey),
         ),
       );
     }
@@ -339,10 +341,10 @@ class _LyricsPageState extends ConsumerState<LyricsPage>
 
   Widget _buildPlainTab(ThemeData theme) {
     if (_plainLyrics.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No plain lyrics on hand.',
-          style: TextStyle(color: Colors.grey),
+          AppLocalizations.of(context).lyricsNoPlain,
+          style: const TextStyle(color: Colors.grey),
         ),
       );
     }

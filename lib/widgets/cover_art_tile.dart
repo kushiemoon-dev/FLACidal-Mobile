@@ -73,8 +73,8 @@ class CoverArtTile extends StatelessWidget {
       imageUrl: url,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 200),
-      placeholder: (_, __) => _buildPlaceholder(context),
-      errorWidget: (_, __, ___) => _buildPlaceholder(context),
+      placeholder: (_, _) => _buildPlaceholder(context),
+      errorWidget: (_, _, _) => _buildPlaceholder(context),
     );
   }
 

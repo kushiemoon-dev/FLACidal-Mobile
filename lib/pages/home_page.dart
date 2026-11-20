@@ -10,6 +10,9 @@ import '../providers/shared_url_provider.dart';
 import '../widgets/cover_art_tile.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/error_text.dart';
+import '../core/core_errors.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -79,7 +82,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           _urlController.text = url;
         } else {
           setState(() {
-            _error = 'Unable to resolve that URL to a supported source';
+            _error = AppLocalizations.of(context).homeResolveFailed;
             _loading = false;
           });
           return;
@@ -97,12 +100,12 @@ class _HomePageState extends ConsumerState<HomePage> {
       });
     } on FlacCoreException catch (e) {
       setState(() {
-        _error = e.message;
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     }
@@ -143,9 +146,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${selectedTracks.length} tracks queued'),
+            content: Text(AppLocalizations.of(context).tracksQueued(selectedTracks.length)),
             action: SnackBarAction(
-              label: 'View Queue',
+              label: AppLocalizations.of(context).viewQueue,
               onPressed: () => context.go('/queue'),
             ),
           ),
@@ -155,7 +158,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -171,7 +174,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.upload_file),
-            tooltip: 'Import CSV',
+            tooltip: AppLocalizations.of(context).homeImportCsv,
             onPressed: () => context.push('/csv-import'),
           ),
         ],
@@ -186,13 +189,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: TextField(
                     controller: _urlController,
                     decoration: InputDecoration(
-                      hintText:
-                          'Drop a Tidal, Qobuz, Deezer, or Bandcamp URL here...',
+                      hintText: AppLocalizations.of(context).homeUrlHint,
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.content_paste),
                         onPressed: _pasteFromClipboard,
-                        tooltip: 'Fill in from clipboard',
+                        tooltip: AppLocalizations.of(context).homePasteTooltip,
                       ),
                     ),
                     onSubmitted: (_) => _fetchContent(),
@@ -212,7 +214,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Fetch'),
+                      : Text(AppLocalizations.of(context).homeFetch),
                 ),
               ],
             ),
@@ -252,16 +254,14 @@ class _HomePageState extends ConsumerState<HomePage> {
             const Divider(),
             Expanded(child: _buildTrackList()),
           ] else if (_error == null)
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.music_note, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      'Get started by pasting a Tidal, Qobuz, Deezer, or Bandcamp URL',
-                    ),
+                    const Icon(Icons.music_note, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text(AppLocalizations.of(context).homeGetStarted),
                   ],
                 ),
               ),
@@ -275,7 +275,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 _downloadSelected();
               },
               icon: const Icon(Icons.download),
-              label: Text('Download ${_selectedTracks.length}'),
+              label: Text(AppLocalizations.of(context).downloadCount(_selectedTracks.length)),
             )
           : null,
     );
@@ -313,7 +313,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 Text(
-                  '${tracks.length} tracks',
+                  AppLocalizations.of(context).tracksCount(tracks.length),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -337,8 +337,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               });
             },
             tooltip: _selectedTracks.length == tracks.length
-                ? 'Deselect all'
-                : 'Select all',
+                ? AppLocalizations.of(context).deselectAll
+                : AppLocalizations.of(context).selectAll,
           ),
         ],
       ),

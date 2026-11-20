@@ -11,6 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/download_service.dart';
 import 'theme/flacidal_theme.dart';
 import 'core/flac_core.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/current_l10n.dart';
+import 'providers/locale_provider.dart';
 import 'providers/queue_provider.dart';
 import 'providers/shared_url_provider.dart';
 import 'providers/theme_provider.dart';
@@ -47,12 +50,6 @@ void main() async {
     debugPrint('FlacCore failed to initialize: $e');
   }
 
-  try {
-    FlacCore.instance.callSync('restoreQueue');
-  } catch (e) {
-    debugPrint('Failed to restore the queue: $e');
-  }
-
   await DownloadService.init();
 
   const musicPath = '/storage/emulated/0/Music/FLACidal';
@@ -86,7 +83,7 @@ void main() async {
   // Wire the foreground service lifecycle to the global download queue:
   // start on the first active/queued job (any RPC path), stop only when
   // the queue is fully empty. fireImmediately covers a queue already
-  // non-empty at cold start (restoreQueue() runs before this listener).
+  // non-empty at cold start (Core restores the queue during FlacInit).
   container.listen<AsyncValue<Map<String, dynamic>>>(
     queueStatusProvider,
     (previous, next) {
@@ -99,7 +96,11 @@ void main() async {
       if (!wasBusy && isBusy) {
         final active = (nextStatus['active'] as num?)?.toInt() ?? 0;
         final queued = (nextStatus['queued'] as num?)?.toInt() ?? 0;
-        DownloadService.start(total: active + queued);
+        DownloadService.start(
+          text: currentL10n(container.read(localeProvider)).notifGrabbing(
+            active + queued,
+          ),
+        );
       } else if (wasBusy && !isBusy) {
         DownloadService.stop();
       }
@@ -195,9 +196,13 @@ class _FlacAppState extends ConsumerState<FlacApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final accentColor = ref.watch(accentColorProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       title: 'FLACidal',
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: FlacTheme.light(accentColor: accentColor),

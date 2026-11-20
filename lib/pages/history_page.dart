@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -35,21 +36,20 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 
   Future<void> _clearHistory() async {
+    final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear History'),
-        content: const Text(
-          "This removes your entire download history; there's no going back.",
-        ),
+        title: Text(l.historyClearTitle),
+        content: Text(l.historyClearBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear'),
+            child: Text(l.historyClear),
           ),
         ],
       ),
@@ -64,12 +64,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('History'),
+        title: Text(AppLocalizations.of(context).historyTitle),
         actions: [
           if (_history.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
-              tooltip: 'Wipe history',
+              tooltip: AppLocalizations.of(context).historyWipe,
               onPressed: _clearHistory,
             ),
         ],
@@ -83,14 +83,14 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
     if (_history.isEmpty) {
       return ListView(
-        children: const [
-          SizedBox(height: 120),
+        children: [
+          const SizedBox(height: 120),
           Center(
             child: Column(
               children: [
-                Icon(Icons.history, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text('Nothing downloaded yet'),
+                const Icon(Icons.history, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context).historyEmpty),
               ],
             ),
           ),

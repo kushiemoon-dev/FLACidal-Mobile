@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/core_provider.dart';
 import '../providers/queue_provider.dart';
 import '../widgets/circular_download_indicator.dart';
+import '../l10n/app_localizations.dart';
 
 class QueuePage extends ConsumerWidget {
   const QueuePage({super.key});
@@ -16,11 +17,11 @@ class QueuePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Queue'),
+        title: Text(AppLocalizations.of(context).queueTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Retry failed',
+            tooltip: AppLocalizations.of(context).queueRetryFailed,
             onPressed: () {
               final core = ref.read(flacCoreProvider);
               core.callSync('retryAllFailed');
@@ -34,7 +35,7 @@ class QueuePage extends ConsumerWidget {
           queueStatus.when(
             data: (status) => _StatsBar(status: status),
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
           const Divider(height: 1),
           Expanded(child: _TrackList(tracks: tracks)),
@@ -82,12 +83,24 @@ class _StatsBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _Stat(label: 'Active', value: '$active', color: cs.primary),
-          _Stat(label: 'Queued', value: '$queued', color: cs.secondary),
-          _Stat(label: 'Failed', value: '$failed', color: cs.error),
+          _Stat(
+            label: AppLocalizations.of(context).queueActive,
+            value: '$active',
+            color: cs.primary,
+          ),
+          _Stat(
+            label: AppLocalizations.of(context).queueQueued,
+            value: '$queued',
+            color: cs.secondary,
+          ),
+          _Stat(
+            label: AppLocalizations.of(context).queueFailed,
+            value: '$failed',
+            color: cs.error,
+          ),
           if (paused)
             Chip(
-              label: const Text('PAUSED'),
+              label: Text(AppLocalizations.of(context).queuePaused),
               backgroundColor: cs.tertiaryContainer,
             ),
         ],
@@ -127,13 +140,13 @@ class _TrackList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (tracks.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.download_done, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Nothing is downloading right now'),
+            const Icon(Icons.download_done, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).queueEmpty),
           ],
         ),
       );
@@ -152,7 +165,7 @@ class _TrackList extends StatelessWidget {
         final title =
             result?['title'] as String? ??
             result?['Title'] as String? ??
-            'Track ${entries[i].key}';
+            AppLocalizations.of(context).queueTrackFallback(entries[i].key);
         final artist =
             result?['artist'] as String? ?? result?['Artist'] as String? ?? '';
         final errorMsg = result?['error'] as String? ?? '';
@@ -212,7 +225,10 @@ class _TrackTile extends StatelessWidget {
     } else if (status == 'downloading' && speed > 0 && bytesTotal > 0) {
       final remaining = bytesTotal - bytesDownloaded;
       subtitle = Text(
-        '${_formatSpeed(speed)}, ${_formatBytes(remaining)} left',
+        AppLocalizations.of(context).queueSpeedLeft(
+          _formatSpeed(speed),
+          _formatBytes(remaining),
+        ),
         style: Theme.of(context).textTheme.bodySmall,
       );
     } else if (artist.isNotEmpty) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/app_localizations.dart';
 
 class TrackListTile extends StatelessWidget {
   final int trackNumber;
@@ -125,7 +126,9 @@ class TrackListTile extends StatelessWidget {
                   },
                   visualDensity: VisualDensity.compact,
                   splashRadius: 20,
-                  tooltip: isPlaying ? 'Pause' : 'Play',
+                  tooltip: isPlaying
+                      ? AppLocalizations.of(context).trackPause
+                      : AppLocalizations.of(context).trackPlay,
                 ),
               ],
               if (onDownload != null) ...[
@@ -139,7 +142,7 @@ class TrackListTile extends StatelessWidget {
                   onPressed: onDownload,
                   visualDensity: VisualDensity.compact,
                   splashRadius: 20,
-                  tooltip: 'Download',
+                  tooltip: AppLocalizations.of(context).trackDownload,
                 ),
               ],
             ],
@@ -159,7 +162,7 @@ class TrackListTile extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Download quality',
+              AppLocalizations.of(ctx).trackDownloadQuality,
               style: Theme.of(ctx).textTheme.titleMedium,
             ),
           ),

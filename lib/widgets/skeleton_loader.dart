@@ -92,7 +92,7 @@ class SkeletonLoader extends StatelessWidget {
         childAspectRatio: 0.75,
       ),
       itemCount: itemCount,
-      itemBuilder: (_, __) {
+      itemBuilder: (_, _) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

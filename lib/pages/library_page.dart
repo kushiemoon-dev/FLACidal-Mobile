@@ -2,11 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
 import '../providers/audio_provider.dart';
 import '../providers/core_provider.dart';
 import 'edit_metadata_page.dart';
+import 'library/selection_bar.dart';
 import 'local_album_page.dart';
+import '../widgets/error_text.dart';
+import '../core/core_errors.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
@@ -28,6 +33,31 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   String _formatFilter = 'all'; // all, flac, mp3, opus
 
   bool _albumView = false;
+
+  // Selection mode (rename / analyze). Long press enters it.
+  Set<String> _selected = {};
+
+  void _toggleSelect(String path) {
+    if (path.isEmpty) return;
+    setState(() {
+      _selected = _selected.contains(path)
+          ? ({..._selected}..remove(path))
+          : {..._selected, path};
+    });
+  }
+
+  void _clearSelection() => setState(() => _selected = {});
+
+  Future<void> _openRename(List<String> paths) async {
+    final changed = await context.push<bool>('/rename', extra: paths);
+    _clearSelection();
+    if (changed == true) _loadFiles();
+  }
+
+  void _openAnalyze(List<String> paths) {
+    context.push('/analyze', extra: paths);
+    _clearSelection();
+  }
 
   @override
   void initState() {
@@ -108,7 +138,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   ),
                 ),
               ),
-              Text('Metadata', style: Theme.of(ctx).textTheme.titleLarge),
+              Text(
+                AppLocalizations.of(ctx).libraryMetadata,
+                style: Theme.of(ctx).textTheme.titleLarge,
+              ),
               const SizedBox(height: 16),
               ...meta.entries.map(
                 (e) => Padding(
@@ -135,7 +168,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 children: [
                   FilledButton.tonalIcon(
                     icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Edit Metadata'),
+                    label: Text(AppLocalizations.of(ctx).metaTitle),
                     onPressed: () {
                       Navigator.pop(ctx);
                       Navigator.push(
@@ -153,7 +186,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.image, size: 18),
-                    label: const Text('Save Cover Art'),
+                    label: Text(AppLocalizations.of(ctx).librarySaveCover),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _extractCoverArt(path.toString());
@@ -161,7 +194,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.lyrics, size: 18),
-                    label: const Text('Save Lyrics'),
+                    label: Text(AppLocalizations.of(ctx).metaSaveLyrics),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _saveLyricsToFile(path.toString());
@@ -169,7 +202,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.auto_fix_high, size: 18),
-                    label: const Text('Re-enrich'),
+                    label: Text(AppLocalizations.of(ctx).metaReEnrich),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _reEnrichMetadata(path.toString());
@@ -177,7 +210,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.swap_horiz, size: 18),
-                    label: const Text('Convert'),
+                    label: Text(AppLocalizations.of(ctx).convertTitle),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _showConvertDialog(path.toString());
@@ -193,7 +226,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -205,14 +238,14 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final savedPath = result['result']?['path'] ?? 'unknown';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Saved cover art to $savedPath')),
+          SnackBar(content: Text(AppLocalizations.of(context).metaSavedCover(savedPath))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -225,13 +258,13 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Saved lyrics to $savedPath')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).metaSavedLyrics(savedPath))));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -243,8 +276,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       final fields = result['result']?['updated_fields'] as List? ?? [];
       if (mounted) {
         final msg = fields.isEmpty
-            ? 'Nothing new to update'
-            : 'Fields updated: ${fields.join(", ")}';
+            ? AppLocalizations.of(context).metaNothingNew
+            : AppLocalizations.of(context).metaFieldsUpdated(fields.join(', '));
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
@@ -253,7 +286,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -267,14 +300,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         await showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('FFmpeg is unavailable'),
-            content: const Text(
-              'FFmpeg needs to be installed on this device for format conversion to work.',
-            ),
+            title: Text(AppLocalizations.of(ctx).convertFfmpegUnavailable),
+            content: Text(AppLocalizations.of(ctx).convertFfmpegBody),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('OK'),
+                child: Text(AppLocalizations.of(ctx).ok),
               ),
             ],
           ),
@@ -290,12 +321,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Convert'),
+          title: Text(AppLocalizations.of(ctx).convertTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Output format'),
+              Text(AppLocalizations.of(ctx).convertOutputFormat),
               const SizedBox(height: 8),
               SegmentedButton<String>(
                 segments: const [
@@ -308,13 +339,13 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                     setDialogState(() => format = v.first),
               ),
               const SizedBox(height: 16),
-              Text('Bitrate: ${bitrate}k'),
+              Text(AppLocalizations.of(ctx).convertBitrate(bitrate)),
               Slider(
                 value: bitrate.toDouble(),
                 min: 128,
                 max: 320,
                 divisions: 4,
-                label: '${bitrate}k',
+                label: AppLocalizations.of(ctx).convertKbps(bitrate),
                 onChanged: (v) => setDialogState(() => bitrate = v.round()),
               ),
             ],
@@ -322,11 +353,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(ctx).cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Convert'),
+              child: Text(AppLocalizations.of(ctx).convertTitle),
             ),
           ],
         ),
@@ -341,7 +372,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   Future<void> _convertFile(String path, String format, int bitrate) async {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Converting...')));
+    ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).convertConverting)));
     try {
       final core = ref.read(flacCoreProvider);
       core.callSync('convertFiles', {
@@ -355,14 +386,18 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Conversion finished')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).convertDone)));
         _loadFiles();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Conversion failed: $e')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).convertFailed(describeCoreError(AppLocalizations.of(context), e))),
+          ),
+        );
       }
     }
   }
@@ -374,19 +409,19 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete File'),
-        content: Text('Remove "$name"?'),
+        title: Text(AppLocalizations.of(ctx).libraryDeleteTitle),
+        content: Text(AppLocalizations.of(ctx).libraryDeleteBody('$name')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx).cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(ctx).delete),
           ),
         ],
       ),
@@ -400,7 +435,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+          ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
         }
       }
     }
@@ -414,17 +449,30 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     }).length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Library${flacCount > 0 ? ' ($flacCount)' : ''}'),
+      appBar: _selected.isNotEmpty
+          ? SelectionBar(
+              count: _selected.length,
+              onCancel: _clearSelection,
+              onRename: () => _openRename(_selected.toList()),
+              onAnalyze: () => _openAnalyze(_selected.toList()),
+            )
+          : AppBar(
+        title: Text(
+          flacCount > 0
+              ? AppLocalizations.of(context).libraryTitleCount(flacCount)
+              : AppLocalizations.of(context).libraryTitle,
+        ),
         actions: [
           IconButton(
             icon: Icon(_albumView ? Icons.list : Icons.album),
-            tooltip: _albumView ? 'Track view' : 'Album view',
+            tooltip: _albumView
+                ? AppLocalizations.of(context).libraryTrackView
+                : AppLocalizations.of(context).libraryAlbumView,
             onPressed: () => setState(() => _albumView = !_albumView),
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
-            tooltip: 'Sort',
+            tooltip: AppLocalizations.of(context).librarySort,
             onSelected: (v) {
               setState(() {
                 _sortBy = v;
@@ -435,17 +483,17 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               CheckedPopupMenuItem(
                 value: 'name',
                 checked: _sortBy == 'name',
-                child: const Text('Name'),
+                child: Text(AppLocalizations.of(context).librarySortName),
               ),
               CheckedPopupMenuItem(
                 value: 'date',
                 checked: _sortBy == 'date',
-                child: const Text('Date'),
+                child: Text(AppLocalizations.of(context).librarySortDate),
               ),
               CheckedPopupMenuItem(
                 value: 'size',
                 checked: _sortBy == 'size',
-                child: const Text('Size'),
+                child: Text(AppLocalizations.of(context).librarySortSize),
               ),
             ],
           ),
@@ -525,22 +573,22 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       child: Row(
         children: [
           _FilterChipDropdown(
-            label: 'Source',
+            label: AppLocalizations.of(context).libraryFilterSource,
             value: _sourceFilter,
-            options: const {
-              'all': 'All',
+            options: {
+              'all': AppLocalizations.of(context).libraryFilterAll,
               'tidal': 'Tidal',
               'qobuz': 'Qobuz',
-              'unknown': 'Unknown',
+              'unknown': AppLocalizations.of(context).libraryFilterUnknown,
             },
             onChanged: (v) => setState(() => _sourceFilter = v),
           ),
           const SizedBox(width: 8),
           _FilterChipDropdown(
-            label: 'Quality',
+            label: AppLocalizations.of(context).libraryFilterQuality,
             value: _qualityFilter,
-            options: const {
-              'all': 'All',
+            options: {
+              'all': AppLocalizations.of(context).libraryFilterAll,
               'standard': '16-bit',
               'hires': '24-bit Hi-Res',
             },
@@ -548,10 +596,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           ),
           const SizedBox(width: 8),
           _FilterChipDropdown(
-            label: 'Format',
+            label: AppLocalizations.of(context).libraryFilterFormat,
             value: _formatFilter,
-            options: const {
-              'all': 'All',
+            options: {
+              'all': AppLocalizations.of(context).libraryFilterAll,
               'flac': 'FLAC',
               'mp3': 'MP3',
               'opus': 'Opus',
@@ -561,7 +609,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           if (_hasActiveFilters) ...[
             const SizedBox(width: 8),
             ActionChip(
-              label: const Text('Clear'),
+              label: Text(AppLocalizations.of(context).libraryFilterClear),
               onPressed: () {
                 setState(() {
                   _sourceFilter = 'all';
@@ -584,18 +632,18 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
     if (_files.isEmpty) {
       return ListView(
-        children: const [
-          SizedBox(height: 120),
+        children: [
+          const SizedBox(height: 120),
           Center(
             child: Column(
               children: [
-                Icon(Icons.library_music, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text("You haven't downloaded anything yet"),
-                SizedBox(height: 8),
+                const Icon(Icons.library_music, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context).libraryEmpty),
+                const SizedBox(height: 8),
                 Text(
-                  'Head to the Home page to download some tracks',
-                  style: TextStyle(color: Colors.grey),
+                  AppLocalizations.of(context).libraryEmptyHint,
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ],
             ),
@@ -611,7 +659,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search your library...',
+              hintText: AppLocalizations.of(context).librarySearchHint,
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -631,7 +679,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         _buildFilterChips(),
         const SizedBox(height: 4),
         if (flacFiles.isEmpty)
-          const Expanded(child: Center(child: Text('Nothing matches')))
+          Expanded(child: Center(child: Text(AppLocalizations.of(context).libraryNothingMatches)))
         else if (_albumView)
           Expanded(child: _buildAlbumView(flacFiles))
         else if (_gridView)
@@ -646,7 +694,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     final albumGroups = <String, List<Map<String, dynamic>>>{};
     for (final file in flacFiles) {
       final album = (file['album'] ?? '').toString();
-      final key = album.isNotEmpty ? album : 'Unknown Album';
+      final key = album.isNotEmpty ? album : AppLocalizations.of(context).libraryUnknownAlbum;
       albumGroups.putIfAbsent(key, () => []).add(file);
     }
 
@@ -666,7 +714,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           leading: _buildCoverArt(tracks.first, size: 48),
           title: Text(albumName, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(
-            '${artist.isNotEmpty ? '$artist · ' : ''}${tracks.length} tracks${quality.isNotEmpty ? ' · $quality' : ''}',
+            '${artist.isNotEmpty ? '$artist · ' : ''}${AppLocalizations.of(context).tracksCount(tracks.length)}${quality.isNotEmpty ? ' · $quality' : ''}',
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () async {
@@ -698,14 +746,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         final isPlaying =
             audioState.isPlaying && audioState.currentFile == path;
 
+        final isSelected = _selected.contains(path);
+
         return ListTile(
-          leading: _buildCoverArt(file, size: 40),
+          leading: isSelected
+              ? const CircleAvatar(child: Icon(Icons.check))
+              : _buildCoverArt(file, size: 40),
           title: Text(
             displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(_formatSize(size)),
+          selected: isSelected,
+          onTap: _selected.isNotEmpty ? () => _toggleSelect(path) : null,
+          onLongPress: () => _toggleSelect(path),
           tileColor: isPlaying
               ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
               : null,
@@ -734,20 +789,31 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                     }
                   },
                   visualDensity: VisualDensity.compact,
-                  tooltip: isPlaying ? 'Pause' : 'Play',
+                  tooltip: isPlaying
+                      ? AppLocalizations.of(context).trackPause
+                      : AppLocalizations.of(context).trackPlay,
                 ),
               PopupMenuButton<String>(
                 onSelected: (value) {
                   switch (value) {
                     case 'metadata':
                       _showMetadata(file);
+                    case 'analyze':
+                      _openAnalyze([path]);
                     case 'delete':
                       _deleteFile(file);
                   }
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'metadata', child: Text('Metadata')),
-                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'metadata',
+                    child: Text(AppLocalizations.of(context).libraryMetadata),
+                  ),
+                  PopupMenuItem(
+                    value: 'analyze',
+                    child: Text(AppLocalizations.of(context).libraryAnalyze),
+                  ),
+                  PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context).delete)),
                 ],
               ),
             ],
@@ -772,10 +838,23 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         final name = file['name'] ?? file['Name'] ?? 'Unknown';
         final displayName = name.toString().replaceAll('.flac', '');
 
+        final gridPath = (file['path'] ?? file['Path'] ?? '').toString();
+
         return GestureDetector(
-          onTap: () => _showMetadata(file),
-          onLongPress: () => _deleteFile(file),
+          onTap: () => _selected.isNotEmpty
+              ? _toggleSelect(gridPath)
+              : _showMetadata(file),
+          onLongPress: () => _toggleSelect(gridPath),
           child: Card(
+            shape: _selected.contains(gridPath)
+                ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  )
+                : null,
             clipBehavior: Clip.antiAlias,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -9,6 +9,8 @@ import '../providers/core_provider.dart';
 import '../widgets/cover_art_tile.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
+import '../core/core_errors.dart';
+import '../l10n/app_localizations.dart';
 
 enum _SearchService { all, tidal, qobuz, deezer }
 
@@ -146,12 +148,12 @@ class _SearchPageState extends ConsumerState<SearchPage>
       });
     } on FlacCoreException catch (e) {
       setState(() {
-        _error = e.message;
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     }
@@ -206,8 +208,9 @@ class _SearchPageState extends ConsumerState<SearchPage>
       _SearchService.qobuz => 'Qobuz',
       _SearchService.deezer => 'Deezer',
     };
-    final hintText =
-        'Search${hintService.isNotEmpty ? ' $hintService' : ''}...';
+    final hintText = hintService.isNotEmpty
+        ? AppLocalizations.of(context).searchHintService(hintService)
+        : AppLocalizations.of(context).searchHint;
 
     return Scaffold(
       appBar: AppBar(
@@ -258,8 +261,9 @@ class _SearchPageState extends ConsumerState<SearchPage>
                             selected: _service == s,
                             onSelected: (_) {
                               setState(() => _service = s);
-                              if (_searchController.text.trim().isNotEmpty)
+                              if (_searchController.text.trim().isNotEmpty) {
                                 _search();
+                              }
                             },
                             visualDensity: VisualDensity.compact,
                           ),
@@ -267,12 +271,13 @@ class _SearchPageState extends ConsumerState<SearchPage>
                       }),
                       const SizedBox(width: 8),
                       FilterChip(
-                        label: const Text('Songs only'),
+                        label: Text(AppLocalizations.of(context).searchSongsOnly),
                         selected: _songsOnly,
                         onSelected: (v) {
                           setState(() => _songsOnly = v);
-                          if (_searchController.text.trim().isNotEmpty)
+                          if (_searchController.text.trim().isNotEmpty) {
                             _search();
+                          }
                         },
                         visualDensity: VisualDensity.compact,
                       ),
@@ -285,20 +290,20 @@ class _SearchPageState extends ConsumerState<SearchPage>
                               _applySorting();
                             });
                           },
-                          itemBuilder: (_) => const [
+                          itemBuilder: (_) => [
                             CheckedPopupMenuItem(
                               value: _SortMode.relevance,
-                              child: Text('Relevance'),
+                              child: Text(AppLocalizations.of(context).searchSortRelevance),
                             ),
                             CheckedPopupMenuItem(
                               value: _SortMode.dateDesc,
-                              child: Text('Date'),
+                              child: Text(AppLocalizations.of(context).searchSortDate),
                             ),
-                            CheckedPopupMenuItem(
+                            const CheckedPopupMenuItem(
                               value: _SortMode.az,
                               child: Text('A-Z'),
                             ),
-                            CheckedPopupMenuItem(
+                            const CheckedPopupMenuItem(
                               value: _SortMode.za,
                               child: Text('Z-A'),
                             ),
@@ -306,8 +311,10 @@ class _SearchPageState extends ConsumerState<SearchPage>
                           child: Chip(
                             avatar: const Icon(Icons.sort, size: 16),
                             label: Text(switch (_sortMode) {
-                              _SortMode.relevance => 'Relevance',
-                              _SortMode.dateDesc => 'Date',
+                              _SortMode.relevance =>
+                                AppLocalizations.of(context).searchSortRelevance,
+                              _SortMode.dateDesc =>
+                                AppLocalizations.of(context).searchSortDate,
                               _SortMode.az => 'A-Z',
                               _SortMode.za => 'Z-A',
                             }),
@@ -323,10 +330,10 @@ class _SearchPageState extends ConsumerState<SearchPage>
                 TabBar(
                   controller: _tabController,
                   tabs: [
-                    Tab(text: 'Tracks (${_tracks.length})'),
-                    Tab(text: 'Albums (${_albums.length})'),
-                    Tab(text: 'Artists (${_artists.length})'),
-                    Tab(text: 'Deezer (${_deezerResults.length})'),
+                    Tab(text: AppLocalizations.of(context).searchTabTracks(_tracks.length)),
+                    Tab(text: AppLocalizations.of(context).searchTabAlbums(_albums.length)),
+                    Tab(text: AppLocalizations.of(context).searchTabArtists(_artists.length)),
+                    Tab(text: AppLocalizations.of(context).searchTabDeezer(_deezerResults.length)),
                   ],
                 ),
             ],
@@ -344,8 +351,9 @@ class _SearchPageState extends ConsumerState<SearchPage>
       _deezerResults.isNotEmpty;
 
   Widget _buildBody() {
-    if (_loading)
+    if (_loading) {
       return const SkeletonLoader(layout: SkeletonLayout.searchResults);
+    }
 
     if (_error != null) {
       return Center(
@@ -365,13 +373,13 @@ class _SearchPageState extends ConsumerState<SearchPage>
     }
 
     if (!_hasResults) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Look up tracks, albums, or artists'),
+            const Icon(Icons.search, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).searchPrompt),
           ],
         ),
       );
@@ -421,7 +429,7 @@ class _TrackResults extends StatelessWidget {
             }
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(SnackBar(content: Text('$title queued')));
+            ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).titleQueued(title.toString()))));
           },
         );
       },
@@ -463,7 +471,7 @@ class _AlbumResults extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            '$artist${year.isNotEmpty ? ' · $year' : ''} · $tracks tracks',
+            '$artist${year.isNotEmpty ? ' · $year' : ''} · ${AppLocalizations.of(context).tracksCount(tracks is num ? tracks.toInt() : 0)}',
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
@@ -507,13 +515,13 @@ class _DeezerResults extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (results.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.music_note, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Search Deezer to find results from anywhere'),
+            const Icon(Icons.music_note, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).searchDeezerPrompt),
           ],
         ),
       );
@@ -537,7 +545,7 @@ class _DeezerResults extends StatelessWidget {
                     width: 48,
                     height: 48,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
+                    errorBuilder: (_, _, _) =>
                         const Icon(Icons.music_note, size: 48),
                   ),
                 )
@@ -568,7 +576,7 @@ class _DeezerResults extends StatelessWidget {
                     });
                     ScaffoldMessenger.of(
                       context,
-                    ).showSnackBar(SnackBar(content: Text('$title queued')));
+                    ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).titleQueued(title.toString()))));
                   },
           ),
         );

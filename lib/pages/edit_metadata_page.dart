@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/core_provider.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/error_text.dart';
 
 class EditMetadataPage extends ConsumerStatefulWidget {
   final String filePath;
@@ -100,14 +102,14 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Metadata updated')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).metaUpdated)));
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -123,14 +125,14 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       final savedPath = result['result']?['path'] ?? 'unknown';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Saved cover art to $savedPath')),
+          SnackBar(content: Text(AppLocalizations.of(context).metaSavedCover(savedPath))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -145,13 +147,13 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Saved lyrics to $savedPath')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).metaSavedLyrics(savedPath))));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -165,8 +167,8 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       final fields = result['result']?['updated_fields'] as List? ?? [];
       if (mounted) {
         final msg = fields.isEmpty
-            ? 'Nothing new to update'
-            : 'Fields updated: ${fields.join(", ")}';
+            ? AppLocalizations.of(context).metaNothingNew
+            : AppLocalizations.of(context).metaFieldsUpdated(fields.join(', '));
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
@@ -175,7 +177,7 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -184,7 +186,7 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Metadata'),
+        title: Text(AppLocalizations.of(context).metaTitle),
         actions: [
           if (_saving)
             const Padding(
@@ -198,7 +200,7 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
           else
             IconButton(
               icon: const Icon(Icons.save),
-              tooltip: 'Save',
+              tooltip: AppLocalizations.of(context).save,
               onPressed: _save,
             ),
         ],
@@ -212,31 +214,31 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
             children: [
               ActionChip(
                 avatar: const Icon(Icons.image, size: 18),
-                label: const Text('Extract Cover Art'),
+                label: Text(AppLocalizations.of(context).metaExtractCover),
                 onPressed: _extractCoverArt,
               ),
               ActionChip(
                 avatar: const Icon(Icons.lyrics, size: 18),
-                label: const Text('Save Lyrics'),
+                label: Text(AppLocalizations.of(context).metaSaveLyrics),
                 onPressed: _saveLyrics,
               ),
               ActionChip(
                 avatar: const Icon(Icons.auto_fix_high, size: 18),
-                label: const Text('Re-enrich'),
+                label: Text(AppLocalizations.of(context).metaReEnrich),
                 onPressed: _reEnrich,
               ),
             ],
           ),
           const SizedBox(height: 24),
-          _field('Title', _title),
-          _field('Artist', _artist),
-          _field('Album', _album),
-          _field('Album Artist', _albumArtist),
+          _field(AppLocalizations.of(context).metaFieldTitle, _title),
+          _field(AppLocalizations.of(context).metaFieldArtist, _artist),
+          _field(AppLocalizations.of(context).metaFieldAlbum, _album),
+          _field(AppLocalizations.of(context).metaFieldAlbumArtist, _albumArtist),
           Row(
             children: [
               Expanded(
                 child: _field(
-                  'Track #',
+                  AppLocalizations.of(context).metaFieldTrackNumber,
                   _trackNumber,
                   keyboardType: TextInputType.number,
                 ),
@@ -244,20 +246,24 @@ class _EditMetadataPageState extends ConsumerState<EditMetadataPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: _field(
-                  'Disc #',
+                  AppLocalizations.of(context).metaFieldDiscNumber,
                   _discNumber,
                   keyboardType: TextInputType.number,
                 ),
               ),
             ],
           ),
-          _field('Year', _year, keyboardType: TextInputType.number),
-          _field('Genre', _genre),
-          _field('ISRC', _isrc),
-          _field('Label', _label),
-          _field('Copyright', _copyright),
-          _field('Composer', _composer),
-          _field('Comment', _comment, maxLines: 3),
+          _field(
+            AppLocalizations.of(context).metaFieldYear,
+            _year,
+            keyboardType: TextInputType.number,
+          ),
+          _field(AppLocalizations.of(context).metaFieldGenre, _genre),
+          _field(AppLocalizations.of(context).metaFieldIsrc, _isrc),
+          _field(AppLocalizations.of(context).metaFieldLabel, _label),
+          _field(AppLocalizations.of(context).metaFieldCopyright, _copyright),
+          _field(AppLocalizations.of(context).metaFieldComposer, _composer),
+          _field(AppLocalizations.of(context).metaFieldComment, _comment, maxLines: 3),
         ],
       ),
     );

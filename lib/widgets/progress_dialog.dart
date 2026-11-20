@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class ProgressDialogController {
   final _ProgressDialogState _state;
@@ -91,7 +92,7 @@ class _ProgressDialogState extends State<_ProgressDialogWidget> {
     final progress = widget.total > 0 ? _completed / widget.total : 0.0;
 
     return AlertDialog(
-      title: const Text('Downloading'),
+      title: Text(AppLocalizations.of(context).downloadingTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +110,10 @@ class _ProgressDialogState extends State<_ProgressDialogWidget> {
           ),
           const SizedBox(height: 16),
           Text(
-            '$_completed of ${widget.total} downloaded so far',
+            AppLocalizations.of(context).downloadedSoFar(
+              _completed,
+              widget.total,
+            ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           if (_currentTrack.isNotEmpty) ...[
@@ -126,7 +130,10 @@ class _ProgressDialogState extends State<_ProgressDialogWidget> {
         ],
       ),
       actions: [
-        TextButton(onPressed: widget.onCancel, child: const Text('Cancel')),
+        TextButton(
+          onPressed: widget.onCancel,
+          child: Text(AppLocalizations.of(context).cancel),
+        ),
       ],
     );
   }
@@ -170,7 +177,7 @@ class ProgressDialogContent extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          '$completed of $total downloaded so far',
+          AppLocalizations.of(context).downloadedSoFar(completed, total),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         if (currentTrack.isNotEmpty) ...[
@@ -188,7 +195,10 @@ class ProgressDialogContent extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(onPressed: onCancel, child: const Text('Cancel')),
+            child: TextButton(
+              onPressed: onCancel,
+              child: Text(AppLocalizations.of(context).cancel),
+            ),
           ),
         ],
       ],

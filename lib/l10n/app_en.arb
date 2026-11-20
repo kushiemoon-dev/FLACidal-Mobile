@@ -1,0 +1,819 @@
+{
+  "@@locale": "en",
+  "appTitle": "FLACidal",
+  "cancel": "Cancel",
+  "save": "Save",
+  "retry": "Retry",
+  "close": "Close",
+  "ok": "OK",
+  "apply": "Apply",
+  "enable": "Enable",
+  "later": "Later",
+  "configured": "Configured",
+  "notConfigured": "Not configured",
+  "coreErrorGeneric": "Something went wrong.",
+  "coreErrorNotInitialized": "The download engine is not ready yet.",
+  "coreErrorDetail": "{message} ({detail})",
+  "@coreErrorDetail": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "extensionErrorInvalidId": "The extension id is not valid.",
+  "extensionErrorReservedId": "This extension id is reserved for a built-in source.",
+  "extensionErrorInsecureUrl": "The extension address must use HTTPS.",
+  "extensionErrorTooLarge": "The extension package is too large.",
+  "extensionErrorInvalidZip": "The extension package is not a valid archive.",
+  "extensionErrorInvalidManifest": "The extension manifest is not valid.",
+  "extensionErrorNotFound": "This extension is not installed.",
+  "extensionErrorInvalidAuthField": "One of the sign-in fields is not accepted by the extension.",
+  "extensionErrorRegistry": "The extension registry could not be read.",
+  "settingsTitle": "Settings",
+  "sectionDownload": "Download",
+  "settingsQuality": "Quality",
+  "settingsDownloadFolder": "Download folder",
+  "settingsPickFolder": "Pick a download folder",
+  "settingsOrganizeFolders": "Organize by folders",
+  "settingsOrganizeFoldersHint": "Creates subfolders by Artist/Album",
+  "settingsFolderStructure": "Folder structure",
+  "folderFlat": "Flat",
+  "folderByArtistAlbum": "By Artist/Album",
+  "folderByPlaylist": "By Playlist",
+  "folderArtistSingles": "Artist + Singles",
+  "settingsEmbedCover": "Embed cover art",
+  "settingsDownloadFormat": "Download format",
+  "settingsFirstArtistOnly": "First artist only",
+  "settingsFirstArtistOnlyHint": "Write only the first artist in the artist tag",
+  "settingsArtistSeparator": "Artist separator",
+  "settingsArtistSeparatorHint": "Used between artists in the artist tag",
+  "artistSeparatorInvalid": "Enter 1 to 8 characters",
+  "sectionSources": "Sources",
+  "settingsMusicSources": "Music sources",
+  "settingsMusicSourcesHint": "Configure Tidal and Qobuz",
+  "settingsPreferredSource": "Preferred source",
+  "sectionEndpoints": "Self-hosted endpoints",
+  "endpointsTitle": "{name} priority endpoints",
+  "@endpointsTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endpointsPublicOnly": "Public pool only",
+  "endpointsCount": "{count, plural, =1{1 self-hosted endpoint} other{{count} self-hosted endpoints}}",
+  "@endpointsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endpointsSaveFailed": "Could not save endpoints: {error}",
+  "@endpointsSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsExtensions": "Extensions",
+  "settingsExtensionsHint": "Discover and add plugins",
+  "settingsExtensionRepos": "Extension repositories",
+  "settingsExtensionReposHint": "Add your own extension sources",
+  "sectionHistory": "History",
+  "settingsDownloadHistory": "Download history",
+  "sectionAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsFont": "Font",
+  "fontSystemDefault": "System default",
+  "settingsAccent": "Accent color",
+  "settingsLanguage": "Language",
+  "languageAuto": "Automatic (device language)",
+  "sectionAbout": "About",
+  "settingsAppName": "FLACidal Mobile",
+  "settingsExport": "Export config",
+  "settingsImport": "Import config",
+  "settingsChooseExportLocation": "Choose export location",
+  "settingsConfigExported": "Config exported to {path}",
+  "@settingsConfigExported": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsExportFailed": "Export failed: {error}",
+  "@settingsExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsImportTitle": "Import config",
+  "settingsImportWarning": "Importing will replace your current settings. Tidal, Soulseek, and Qobuz credentials will need to be re-entered after import.",
+  "settingsImportAnyway": "Import anyway",
+  "settingsConfigImported": "Config imported",
+  "settingsImportFailed": "Import failed: {error}",
+  "@settingsImportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "repoManagerHint": "https://...",
+  "sourcesTitle": "Sources",
+  "sourcesPriority": "Source priority",
+  "sourcesAvailable": "Available sources",
+  "sourcesNone": "No sources found",
+  "sourcesPreferred": "Preferred source",
+  "sourcesPrimary": "Primary source",
+  "sourcesQualityFallback": "Quality fallback",
+  "sourcesQualityFallbackHint": "Retry at a lower quality when the requested one is unavailable",
+  "sourcesQobuzCredentials": "Qobuz credentials",
+  "sourcesAppId": "App ID",
+  "sourcesAppSecret": "App secret",
+  "sourcesAuthToken": "Auth token",
+  "sourcesTestConnection": "Test connection",
+  "sourcesConnected": "Connected successfully",
+  "sourcesConnectFailed": "Could not connect: {error}",
+  "@sourcesConnectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesTestFailed": "The connection test failed: {error}",
+  "@sourcesTestFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesQobuzUpdated": "Qobuz credentials updated",
+  "sourcesSoulseekCredentials": "Soulseek credentials",
+  "sourcesSoulseekUpdated": "Soulseek credentials updated",
+  "sourcesUsername": "Username",
+  "sourcesPassword": "Password",
+  "sourcesLoadFailed": "Could not load sources: {error}",
+  "@sourcesLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesSetPreferredFailed": "Could not set the preferred source: {error}",
+  "@sourcesSetPreferredFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesFallbackFailed": "Could not update the quality fallback: {error}",
+  "@sourcesFallbackFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesSaveCredentialsFailed": "Could not save credentials: {error}",
+  "@sourcesSaveCredentialsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesSaveOrderFailed": "Could not save the source order: {error}",
+  "@sourcesSaveOrderFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extTitle": "Extensions",
+  "extTabInstalled": "Installed",
+  "extTabBrowse": "Browse",
+  "extNoneInstalled": "Nothing installed yet",
+  "extNoneInstalledHint": "Check the registry to find extensions",
+  "extNoneAvailable": "Nothing available right now",
+  "extRefresh": "Refresh",
+  "extSearchHint": "Find extensions...",
+  "extCategoryAll": "All",
+  "extCategoryDownload": "Download",
+  "extCategoryMetadata": "Metadata",
+  "extCategoryLyrics": "Lyrics",
+  "extCategoryUtility": "Utility",
+  "extInstall": "Install",
+  "extUpdate": "Update",
+  "extInstalledChip": "Installed",
+  "extPermissions": "Permissions: {list}",
+  "@extPermissions": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "extSources": "Sources",
+  "extAddSource": "Add source",
+  "extAddSourceTitle": "Add extension source",
+  "extRepoUrlLabel": "GitHub repository URL",
+  "extRepoUrlInvalid": "Enter an address like https://github.com/owner/repo",
+  "extAdd": "Add",
+  "extNoExtraSources": "No extra sources set up",
+  "extSourceAdded": "New source added",
+  "extSourceAddFailed": "Could not add the source: {error}",
+  "@extSourceAddFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extSourceRemoveFailed": "Could not remove the source: {error}",
+  "@extSourceRemoveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extAdded": "Extension added",
+  "extInstallFailed": "Installation failed: {error}",
+  "@extInstallFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extUninstallTitle": "Uninstall extension",
+  "extUninstallConfirm": "Remove the \"{id}\" extension?",
+  "@extUninstallConfirm": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "extUninstall": "Uninstall",
+  "extActionFailed": "Something went wrong: {error}",
+  "@extActionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extConfigure": "Configure",
+  "extConfigureTitle": "Configure {name}",
+  "@extConfigureTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "extNothingToConfigure": "Nothing to configure here",
+  "extConfigUpdated": "Configuration updated",
+  "extRegistryFailed": "Unable to load the registry: {error}",
+  "@extRegistryFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extRegistrySourceFailed": "Could not read the source {source}: {error}",
+  "@extRegistrySourceFailed": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extEnableTitle": "Enable {name}?",
+  "@extEnableTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "extEnableHosts": "This extension can contact:",
+  "extEnableNoHosts": "No network hosts declared",
+  "extEnablePermissions": "Permissions",
+  "extEnableNoPermissions": "None declared",
+  "librarySelected": "{count} selected",
+  "@librarySelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCancelSelection": "Cancel selection",
+  "libraryRename": "Rename",
+  "libraryAnalyze": "Analyze",
+  "renameTitle": "Rename files",
+  "renameTemplate": "Template",
+  "renameCustomTemplate": "Custom template",
+  "renamePreview": "Preview",
+  "renameApply": "Rename {count} file(s)",
+  "@renameApply": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "renamePreviewFirst": "Preview the new names before renaming",
+  "renamePreviewFailed": "Could not build the preview: {error}",
+  "@renamePreviewFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "renameFailed": "Renaming failed: {error}",
+  "@renameFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "renameDone": "{ok} renamed, {failed} failed",
+  "@renameDone": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "renameRowError": "Cannot rename: {error}",
+  "@renameRowError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "analyzerTitle": "Audio analysis",
+  "analyzerFailed": "Analysis failed: {error}",
+  "@analyzerFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "analyzerVerdict": "Verdict",
+  "analyzerConfidence": "Confidence",
+  "analyzerSampleRate": "Sample rate",
+  "analyzerBitDepth": "Bit depth",
+  "analyzerCutoff": "Spectrum cutoff",
+  "analyzerExpectedCutoff": "Expected cutoff",
+  "analyzerBpm": "Tempo",
+  "analyzerKey": "Key",
+  "analyzerDetails": "Details",
+  "analyzerVerdictLossless": "Lossless",
+  "analyzerVerdictLikelyUpscaled": "Likely upscaled",
+  "analyzerVerdictUpscaled": "Upscaled",
+  "analyzerHz": "{value} Hz",
+  "@analyzerHz": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "analyzerBits": "{value} bit",
+  "@analyzerBits": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "updateRequiredTitle": "Update required",
+  "updateRequiredBody": "This version ({current}) is {behind} versions behind the latest release ({latest}). Update now to keep using the app.",
+  "@updateRequiredBody": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "behind": {
+        "type": "int"
+      },
+      "latest": {
+        "type": "String"
+      }
+    }
+  },
+  "updateNow": "Update now",
+  "updateDownloading": "Downloading...",
+  "updateDownloadingLong": "Downloading update...",
+  "updateMigrationBody": "This update uses a new signing key, so it cannot be installed over your current version. Export your configuration (Settings > About > Export config), uninstall the beta, then install {latest}.",
+  "@updateMigrationBody": {
+    "placeholders": {
+      "latest": {
+        "type": "String"
+      }
+    }
+  },
+  "updateOpenRelease": "Open the release page",
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navQueue": "Queue",
+  "navLibrary": "Library",
+  "navSettings": "Settings",
+  "downloadingTitle": "Downloading",
+  "downloadedSoFar": "{completed} of {total} downloaded so far",
+  "@downloadedSoFar": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "trackPlay": "Play",
+  "trackPause": "Pause",
+  "trackDownload": "Download",
+  "trackDownloadQuality": "Download quality",
+  "viewAll": "View all",
+  "historyTitle": "History",
+  "historyClearTitle": "Clear history",
+  "historyClearBody": "This removes your entire download history; there is no going back.",
+  "historyClear": "Clear",
+  "historyWipe": "Wipe history",
+  "historyEmpty": "Nothing downloaded yet",
+  "queueTitle": "Queue",
+  "queueRetryFailed": "Retry failed",
+  "queueActive": "Active",
+  "queueQueued": "Queued",
+  "queueFailed": "Failed",
+  "queuePaused": "PAUSED",
+  "queueEmpty": "Nothing is downloading right now",
+  "queueTrackFallback": "Track {id}",
+  "@queueTrackFallback": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "queueSpeedLeft": "{speed}, {remaining} left",
+  "@queueSpeedLeft": {
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneric": "Something went wrong: {error}",
+  "@errorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tracksCount": "{count, plural, =1{1 track} other{{count} tracks}}",
+  "@tracksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tracksQueued": "{count, plural, =1{1 track queued} other{{count} tracks queued}}",
+  "@tracksQueued": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "titleQueued": "{title} queued",
+  "@titleQueued": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "viewQueue": "View queue",
+  "downloadCount": "Download {count}",
+  "@downloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "delete": "Delete",
+  "selectAll": "Select all",
+  "deselectAll": "Deselect all",
+  "homeResolveFailed": "Unable to resolve that URL to a supported source",
+  "homeImportCsv": "Import CSV",
+  "homeUrlHint": "Drop a Tidal, Qobuz, Deezer, or Bandcamp URL here...",
+  "homePasteTooltip": "Fill in from clipboard",
+  "homeFetch": "Fetch",
+  "homeGetStarted": "Get started by pasting a Tidal, Qobuz, Deezer, or Bandcamp URL",
+  "searchHint": "Search...",
+  "searchHintService": "Search {service}...",
+  "@searchHintService": {
+    "placeholders": {
+      "service": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSongsOnly": "Songs only",
+  "searchSortRelevance": "Relevance",
+  "searchSortDate": "Date",
+  "searchTabTracks": "Tracks ({count})",
+  "@searchTabTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchTabAlbums": "Albums ({count})",
+  "@searchTabAlbums": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchTabArtists": "Artists ({count})",
+  "@searchTabArtists": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchTabDeezer": "Deezer ({count})",
+  "@searchTabDeezer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchPrompt": "Look up tracks, albums, or artists",
+  "searchDeezerPrompt": "Search Deezer to find results from anywhere",
+  "openInTidal": "Open in Tidal",
+  "share": "Share",
+  "deleteFilesTitle": "Delete files",
+  "deleteFilesBody": "{count, plural, =1{Remove the selected file?} other{Remove {count} selected files?}}",
+  "@deleteFilesBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "discLabel": "Disc {number}",
+  "@discLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsTitle": "Lyrics",
+  "lyricsMissingInput": "Missing both a file path and track info.",
+  "lyricsNoFilePath": "Lyrics can't be embedded without a file path.",
+  "lyricsNothingToEmbed": "There's nothing to embed.",
+  "lyricsEmbedded": "Lyrics embedded.",
+  "lyricsEmbedFailed": "Failed to embed lyrics: {error}",
+  "@lyricsEmbedFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "lyricsInstrumental": "Instrumental",
+  "lyricsEmbedTooltip": "Embed lyrics into the FLAC",
+  "lyricsTabSynced": "Synced",
+  "lyricsTabPlain": "Plain",
+  "lyricsLooksInstrumental": "This one looks to be instrumental.",
+  "lyricsNotFound": "Couldn't find lyrics for this track.",
+  "lyricsNoSynced": "No synced lyrics on hand.",
+  "lyricsNoPlain": "No plain lyrics on hand.",
+  "metaTitle": "Edit metadata",
+  "metaUpdated": "Metadata updated",
+  "metaSavedCover": "Saved cover art to {path}",
+  "@metaSavedCover": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "metaSavedLyrics": "Saved lyrics to {path}",
+  "@metaSavedLyrics": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "metaNothingNew": "Nothing new to update",
+  "metaFieldsUpdated": "Fields updated: {fields}",
+  "@metaFieldsUpdated": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "metaExtractCover": "Extract cover art",
+  "metaSaveLyrics": "Save lyrics",
+  "metaReEnrich": "Re-enrich",
+  "metaFieldTitle": "Title",
+  "metaFieldArtist": "Artist",
+  "metaFieldAlbum": "Album",
+  "metaFieldAlbumArtist": "Album artist",
+  "metaFieldTrackNumber": "Track #",
+  "metaFieldDiscNumber": "Disc #",
+  "metaFieldYear": "Year",
+  "metaFieldGenre": "Genre",
+  "metaFieldIsrc": "ISRC",
+  "metaFieldLabel": "Label",
+  "metaFieldCopyright": "Copyright",
+  "metaFieldComposer": "Composer",
+  "metaFieldComment": "Comment",
+  "csvTitle": "Import CSV",
+  "csvPick": "Pick a CSV file",
+  "csvColumns": "CSV files need these columns: Track Name, Artist Name(s), Album Name, ISRC. Spotify's export format works too.",
+  "csvChoose": "Choose file",
+  "csvQuality": "Quality",
+  "csvMatch": "Match tracks",
+  "csvNoMatch": "No tracks matched, nothing to queue",
+  "csvMatched": "{matched} / {total} matched",
+  "@csvMatched": {
+    "placeholders": {
+      "matched": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "csvQueue": "Queue {count}",
+  "@csvQueue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertTitle": "Convert",
+  "convertFfmpegUnavailable": "FFmpeg is unavailable",
+  "convertFfmpegBody": "FFmpeg needs to be installed on this device for format conversion to work.",
+  "convertFilesSelected": "{count} file(s) selected",
+  "@convertFilesSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertMore": "... and {count} more",
+  "@convertMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertOutputFormat": "Output format",
+  "convertBitrate": "Bitrate: {kbps} kbps",
+  "@convertBitrate": {
+    "placeholders": {
+      "kbps": {
+        "type": "int"
+      }
+    }
+  },
+  "convertKbps": "{kbps} kbps",
+  "@convertKbps": {
+    "placeholders": {
+      "kbps": {
+        "type": "int"
+      }
+    }
+  },
+  "convertDeleteOriginals": "Delete original files",
+  "convertDeleteOriginalsHint": "Deletes the original FLAC once conversion finishes",
+  "convertConverting": "Converting...",
+  "convertDone": "Conversion finished",
+  "convertFailed": "Conversion failed: {error}",
+  "@convertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryTitle": "Library",
+  "libraryTitleCount": "Library ({count})",
+  "@libraryTitleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryTrackView": "Track view",
+  "libraryAlbumView": "Album view",
+  "librarySort": "Sort",
+  "librarySortName": "Name",
+  "librarySortDate": "Date",
+  "librarySortSize": "Size",
+  "libraryFilterSource": "Source",
+  "libraryFilterQuality": "Quality",
+  "libraryFilterFormat": "Format",
+  "libraryFilterAll": "All",
+  "libraryFilterUnknown": "Unknown",
+  "libraryFilterClear": "Clear",
+  "libraryEmpty": "You haven't downloaded anything yet",
+  "libraryEmptyHint": "Head to the Home page to download some tracks",
+  "librarySearchHint": "Search your library...",
+  "libraryNothingMatches": "Nothing matches",
+  "libraryUnknownAlbum": "Unknown album",
+  "libraryMetadata": "Metadata",
+  "librarySaveCover": "Save cover art",
+  "libraryDeleteTitle": "Delete file",
+  "libraryDeleteBody": "Remove \"{name}\"?",
+  "@libraryDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notifGrabbing": "{count, plural, =1{Grabbing 1 track...} other{Grabbing {count} tracks...}}",
+  "@notifGrabbing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifProgress": "{completed} of {total} tracks downloaded",
+  "@notifProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "notifUpdateDownloading": "Downloading update...",
+  "notifUpdateProgress": "Downloading update: {percent}%",
+  "@notifUpdateProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
+}

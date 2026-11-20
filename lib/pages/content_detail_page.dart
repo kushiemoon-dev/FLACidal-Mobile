@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:palette_generator/palette_generator.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,6 +9,8 @@ import '../providers/core_provider.dart';
 import '../widgets/gradient_header.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_list_tile.dart';
+import '../core/core_errors.dart';
+import '../l10n/app_localizations.dart';
 
 class ContentDetailPage extends ConsumerStatefulWidget {
   final String type; // "album" or "playlist"
@@ -55,12 +56,12 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
       _checkDownloadedTracks();
     } on FlacCoreException catch (e) {
       setState(() {
-        _error = e.message;
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     }
@@ -70,13 +71,12 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
     final coverUrl = content?['coverUrl']?.toString() ?? '';
     if (coverUrl.isEmpty) return;
     try {
-      final palette = await PaletteGenerator.fromImageProvider(
-        NetworkImage(coverUrl),
-        maximumColorCount: 16,
+      final scheme = await ColorScheme.fromImageProvider(
+        provider: NetworkImage(coverUrl),
       );
       if (mounted) {
         setState(() {
-          _dominantColor = palette.dominantColor?.color;
+          _dominantColor = scheme.primary;
         });
       }
     } catch (_) {
@@ -127,7 +127,7 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
     }
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('${selected.length} tracks queued')));
+    ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).tracksQueued(selected.length))));
   }
 
   @override
@@ -145,7 +145,7 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
                 _downloadSelected();
               },
               icon: const Icon(Icons.download),
-              label: Text('Download ${_selected.length}'),
+              label: Text(AppLocalizations.of(context).downloadCount(_selected.length)),
             )
           : null,
     );
@@ -170,14 +170,14 @@ class _ContentDetailPageState extends ConsumerState<ContentDetailPage> {
           actions: [
             IconButton(
               icon: const Icon(Icons.open_in_new),
-              tooltip: 'Open in Tidal',
+              tooltip: AppLocalizations.of(context).openInTidal,
               onPressed: () => launchUrl(
                 Uri.parse('https://tidal.com/${widget.type}/${widget.id}'),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.share),
-              tooltip: 'Share',
+              tooltip: AppLocalizations.of(context).share,
               onPressed: () => SharePlus.instance.share(
                 ShareParams(
                   text: 'https://tidal.com/${widget.type}/${widget.id}',

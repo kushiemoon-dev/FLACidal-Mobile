@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../pages/analyzer_page.dart';
 import '../pages/content_detail_page.dart';
 import '../pages/conversion_page.dart';
 import '../pages/csv_import_page.dart';
@@ -11,10 +12,12 @@ import '../pages/home_page.dart';
 import '../pages/lyrics_page.dart';
 import '../pages/search_page.dart';
 import '../pages/queue_page.dart';
+import '../pages/rename_page.dart';
 import '../pages/library_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/sources_page.dart';
 import '../providers/queue_provider.dart';
+import '../l10n/app_localizations.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -83,6 +86,28 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
+      path: '/analyze',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: AnalyzerPage(filePaths: state.extra as List<String>? ?? []),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/rename',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: RenamePage(filePaths: state.extra as List<String>? ?? []),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
       path: '/sources',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => CustomTransitionPage(
@@ -119,11 +144,11 @@ final appRouter = GoRouter(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => AppShell(child: child),
       routes: [
-        GoRoute(path: '/', builder: (_, __) => const HomePage()),
-        GoRoute(path: '/search', builder: (_, __) => const SearchPage()),
-        GoRoute(path: '/queue', builder: (_, __) => const QueuePage()),
-        GoRoute(path: '/library', builder: (_, __) => const LibraryPage()),
-        GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+        GoRoute(path: '/', builder: (_, _) => const HomePage()),
+        GoRoute(path: '/search', builder: (_, _) => const SearchPage()),
+        GoRoute(path: '/queue', builder: (_, _) => const QueuePage()),
+        GoRoute(path: '/library', builder: (_, _) => const LibraryPage()),
+        GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
       ],
     ),
   ],
@@ -143,20 +168,31 @@ class AppShell extends ConsumerWidget {
     final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _tabs.indexWhere((t) => location.startsWith(t));
 
+    final l = AppLocalizations.of(context);
+
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex < 0 ? 0 : currentIndex,
         onDestinationSelected: (i) => context.go(_tabs[i]),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
-          NavigationDestination(icon: Icon(Icons.download), label: 'Queue'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.home), label: l.navHome),
           NavigationDestination(
-            icon: Icon(Icons.library_music),
-            label: 'Library',
+            icon: const Icon(Icons.search),
+            label: l.navSearch,
           ),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(
+            icon: const Icon(Icons.download),
+            label: l.navQueue,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.library_music),
+            label: l.navLibrary,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.settings),
+            label: l.navSettings,
+          ),
         ],
       ),
     );

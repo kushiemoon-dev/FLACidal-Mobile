@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class HorizontalCardList extends StatelessWidget {
   final String title;
@@ -60,7 +61,10 @@ class HorizontalCardList extends StatelessWidget {
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           if (onSeeAll != null)
-            TextButton(onPressed: onSeeAll, child: const Text('View All')),
+            TextButton(
+              onPressed: onSeeAll,
+              child: Text(AppLocalizations.of(context).viewAll),
+            ),
         ],
       ),
     );

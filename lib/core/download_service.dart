@@ -20,7 +20,8 @@ class DownloadService {
     _initialized = true;
   }
 
-  static Future<void> start({required int total}) async {
+  /// [text] is already translated: this runs without a BuildContext.
+  static Future<void> start({required String text}) async {
     if (!_initialized) await init();
 
     // A long-lived TCP connection is needed by Soulseek for the entire session,
@@ -34,18 +35,17 @@ class DownloadService {
     await FlutterForegroundTask.startService(
       serviceTypes: [ForegroundServiceTypes.dataSync],
       notificationTitle: 'FLACidal',
-      notificationText: 'Grabbing $total tracks...',
+      notificationText: text,
     );
   }
 
   static Future<void> update({
-    required int completed,
-    required int total,
+    required String text,
     String? currentTrack,
   }) async {
     await FlutterForegroundTask.updateService(
       notificationTitle: currentTrack ?? 'FLACidal',
-      notificationText: '$completed of $total tracks downloaded',
+      notificationText: text,
     );
   }
 
@@ -58,7 +58,7 @@ class DownloadService {
   /// service (the caller must stop it when the update finishes), false if
   /// it was already running and must be left alone: stopping it here would
   /// kill the queue's own foreground protection out from under it.
-  static Future<bool> startUpdate() async {
+  static Future<bool> startUpdate({required String text}) async {
     if (!_initialized) await init();
 
     if (await FlutterForegroundTask.isRunningService) return false;
@@ -70,15 +70,15 @@ class DownloadService {
     await FlutterForegroundTask.startService(
       serviceTypes: [ForegroundServiceTypes.dataSync],
       notificationTitle: 'FLACidal',
-      notificationText: 'Downloading update...',
+      notificationText: text,
     );
     return true;
   }
 
-  static Future<void> updateUpdateProgress(int percent) async {
+  static Future<void> updateUpdateProgress({required String text}) async {
     await FlutterForegroundTask.updateService(
       notificationTitle: 'FLACidal',
-      notificationText: 'Downloading update: $percent%',
+      notificationText: text,
     );
   }
 }

@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/core_provider.dart';
+import '../core/core_errors.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/error_text.dart';
 
 class CSVImportPage extends ConsumerStatefulWidget {
   const CSVImportPage({super.key});
@@ -62,7 +65,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = describeCoreError(AppLocalizations.of(context), e);
         _loading = false;
       });
     }
@@ -83,7 +86,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
 
     if (matched.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tracks matched, nothing to queue')),
+        SnackBar(content: Text(AppLocalizations.of(context).csvNoMatch)),
       );
       return;
     }
@@ -94,9 +97,9 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${matched.length} tracks queued'),
+            content: Text(AppLocalizations.of(context).tracksQueued(matched.length)),
             action: SnackBarAction(
-              label: 'View Queue',
+              label: AppLocalizations.of(context).viewQueue,
               onPressed: () => context.go('/queue'),
             ),
           ),
@@ -106,7 +109,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Something went wrong: $e')));
+        ).showSnackBar(SnackBar(content: Text(genericErrorText(context, e))));
       }
     }
   }
@@ -121,7 +124,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
     final totalCount = _results?.length ?? 0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Import CSV')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).csvTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -132,20 +135,17 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pick a CSV file',
+                    AppLocalizations.of(context).csvPick,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'CSV files need these columns: Track Name, Artist Name(s), '
-                    "Album Name, ISRC: Spotify's export format works too.",
-                  ),
+                  Text(AppLocalizations.of(context).csvColumns),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       FilledButton.tonalIcon(
                         icon: const Icon(Icons.file_open),
-                        label: const Text('Choose File'),
+                        label: Text(AppLocalizations.of(context).csvChoose),
                         onPressed: _pickFile,
                       ),
                       if (_csvPath != null) ...[
@@ -171,7 +171,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
               child: Row(
                 children: [
                   Text(
-                    'Quality',
+                    AppLocalizations.of(context).csvQuality,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const Spacer(),
@@ -191,7 +191,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
           const SizedBox(height: 12),
           FilledButton.icon(
             icon: const Icon(Icons.search),
-            label: const Text('Match Tracks'),
+            label: Text(AppLocalizations.of(context).csvMatch),
             onPressed: _csvPath != null && !_loading ? _importCSV : null,
           ),
           const SizedBox(height: 16),
@@ -208,7 +208,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                '$matchedCount / $totalCount matched',
+                AppLocalizations.of(context).csvMatched(matchedCount, totalCount),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
@@ -250,7 +250,7 @@ class _CSVImportPageState extends ConsumerState<CSVImportPage> {
           ? FloatingActionButton.extended(
               onPressed: _queueMatched,
               icon: const Icon(Icons.download),
-              label: Text('Queue $matchedCount'),
+              label: Text(AppLocalizations.of(context).csvQueue(matchedCount)),
             )
           : null,
     );

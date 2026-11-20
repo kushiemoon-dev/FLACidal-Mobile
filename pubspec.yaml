@@ -45,7 +45,6 @@ dependencies:
   file_picker: ^10.3.10
   http: ^1.6.0
   shared_preferences: ^2.5.5
-  palette_generator: ^0.3.3+7
   receive_sharing_intent: ^1.8.1
   dynamic_color: ^1.8.1
   flutter_foreground_task: ^9.2.1
@@ -59,6 +58,9 @@ dependencies:
   open_file: ^4.0.0
   crypto: ^3.0.0
   meta: ^1.17.0
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +93,7 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/icon.png

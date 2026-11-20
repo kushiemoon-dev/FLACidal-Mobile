@@ -1,56 +1,53 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flacidal_mobile/providers/config_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flacidal_mobile/providers/config_provider.dart';
-
-// Like widget_test.dart, this exercises ConfigNotifier, which calls into
-// FlacCore (Go FFI) via flacCoreProvider. FlacCore.instance is a singleton
-// with a private constructor (see lib/core/flac_core.dart) that can only be
-// brought up by FlacCore.instance.init(dataDir), done once in main.dart at
-// app startup, so it can't be faked or overridden here without a real
-// native library loaded.
-//
-// Confirmed unrunnable as a plain `flutter test` unit test, not just
-// unverified: ConfigNotifier.save() (config_provider.dart) has no try/catch
-// around core.saveConfig(), and FlacCore._ensureInitialized() throws
-// FlacCoreException(NOT_INITIALIZED) whenever init() hasn't run, which it
-// hasn't here. init() itself needs (a) path_provider's
-// getApplicationDocumentsDirectory(), a platform-channel plugin that needs a
-// running app context (main.dart:29-31), and (b) flac_ffi.dart's
-// DynamicLibrary.open('libflacidal.so')/DynamicLibrary.process(), a native
-// library only resolvable from inside an installed app bundle on a real
-// device/emulator (Android/iOS), not from a bare host `flutter test`
-// process. Wiring both up is real integration-test infrastructure work,
-// out of scope for this task. Skipped rather than faked or silently left
-// red; see task-11-report.md for details.
+import 'support/container.dart';
+import 'support/fake_core.dart';
 
 void main() {
-  test(
-    'ConfigNotifier round-trips the priority-endpoints keys',
-    () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+  test('build reads the config result', () async {
+    final container = await containerWith(
+      FakeTransport(
+        responses: {
+          'getConfig': {'language': 'fr'},
+        },
+      ),
+    );
+    expect(container.read(configProvider).value, {'language': 'fr'});
+  });
 
-      final current = container.read(configProvider).value ?? {};
-      final updated = Map<String, dynamic>.from(current)
-        ..['tidalPriorityEndpoints'] = ['https://tidal.example.com']
-        ..['qobuzPriorityEndpoints'] = ['https://qobuz.example.com']
-        ..['amazonPriorityEndpoints'] = ['https://amazon.example.com'];
+  test('build falls back to an empty map when result is null', () async {
+    final container = await containerWith(
+      FakeTransport(responses: {'getConfig': null}),
+    );
+    expect(container.read(configProvider).value, isEmpty);
+  });
 
-      container.read(configProvider.notifier).save(updated);
+  test('build exposes the error when Core fails', () async {
+    final container = await containerWith(
+      FakeTransport(responses: {'getConfig': const FakeError('X', 'down')}),
+    );
+    expect(container.read(configProvider), isA<AsyncError>());
+  });
 
-      final result = container.read(configProvider).value ?? {};
-      expect(result['tidalPriorityEndpoints'], ['https://tidal.example.com']);
-      expect(result['qobuzPriorityEndpoints'], ['https://qobuz.example.com']);
-      expect(result['amazonPriorityEndpoints'], [
-        'https://amazon.example.com',
-      ]);
-    },
-    skip:
-        'requires FlacCore native init (Go FFI shared library + '
-        'path_provider platform channel): only available inside a real '
-        'app bundle on a device/emulator via integration_test, not a plain '
-        '`flutter test` unit-test process. See lib/main.dart:29-31 for the '
-        'only real init() call site.',
-  );
+  test('save sends the complete map and updates state', () async {
+    final transport = FakeTransport(
+      responses: {
+        'getConfig': {'a': 1},
+        'saveConfig': null,
+      },
+    );
+    final container = await containerWith(transport);
+    final updated = {
+      'a': 1,
+      'tidalPriorityEndpoints': ['https://tidal.example.com'],
+    };
+
+    container.read(configProvider.notifier).save(updated);
+
+    final call = transport.calls.lastWhere((c) => c.method == 'saveConfig');
+    expect(call.params, updated);
+    expect(container.read(configProvider).value, updated);
+  });
 }

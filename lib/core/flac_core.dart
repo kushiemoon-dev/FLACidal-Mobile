@@ -1,28 +1,28 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 
-import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart';
 
+import 'core_transport.dart';
 import 'exceptions.dart';
-import 'flac_ffi.dart';
 
 class FlacCore {
   static FlacCore? _instance;
-  static FlacCore get instance => _instance ??= FlacCore._();
+  static FlacCore get instance => _instance ??= FlacCore._(FfiTransport());
 
-  late final FlacFFI _ffi;
+  final CoreTransport _transport;
   bool _initialized = false;
   String _dataDir = '';
-  String _downloadDir = '';
+  String downloadDir = '';
 
   final _eventController = StreamController<Map<String, dynamic>>.broadcast();
   final _pendingRPCs = <int, Completer<Map<String, dynamic>>>{};
   int _nextRequestId = 0;
 
-  late final NativeCallable<Void Function(Pointer<Char>)> _nativeCallback;
+  FlacCore._(this._transport);
 
-  FlacCore._();
+  @visibleForTesting
+  FlacCore.withTransport(CoreTransport transport) : _transport = transport;
 
   Stream<Map<String, dynamic>> get events => _eventController.stream;
 
@@ -31,36 +31,14 @@ class FlacCore {
 
   bool get isInitialized => _initialized;
   String get dataDir => _dataDir;
-  String get downloadDir => _downloadDir;
-  set downloadDir(String dir) => _downloadDir = dir;
 
   Future<void> init(String dataDir) async {
     if (_initialized) return;
 
-    _ffi = FlacFFI();
+    _transport.setEventHandler(_onEvent);
 
-    // Wire up the event callback
-    _nativeCallback = NativeCallable<Void Function(Pointer<Char>)>.listener(
-      _onEvent,
-    );
-    _ffi.flacSetEventCallback(_nativeCallback.nativeFunction);
-
-    // Bring up the core
-    final dataDirPtr = dataDir.toNativeUtf8().cast<Char>();
-    final resultPtr = _ffi.flacInit(dataDirPtr);
-    calloc.free(dataDirPtr);
-
-    final result = resultPtr.cast<Utf8>().toDartString();
-    _ffi.flacFree(resultPtr);
-
-    final json = jsonDecode(result) as Map<String, dynamic>;
-    if (json.containsKey('error') && json['error'] != null) {
-      final err = json['error'] as Map<String, dynamic>;
-      throw FlacCoreException(
-        code: err['code'] as String,
-        message: err['message'] as String,
-      );
-    }
+    final json = jsonDecode(_transport.init(dataDir)) as Map<String, dynamic>;
+    _throwIfError(json);
 
     _dataDir = dataDir;
     _initialized = true;
@@ -68,21 +46,12 @@ class FlacCore {
 
   Map<String, dynamic> callSync(String method, [Map<String, dynamic>? params]) {
     _ensureInitialized();
-
-    final request = jsonEncode({
-      'method': method,
-      if (params != null) 'params': params,
-    });
-
-    final requestPtr = request.toNativeUtf8().cast<Char>();
-    final resultPtr = _ffi.flacCall(requestPtr);
-    calloc.free(requestPtr);
-
-    final result = resultPtr.cast<Utf8>().toDartString();
-    _ffi.flacFree(resultPtr);
-
-    return _parseResponse(result);
+    return _parseResponse(_transport.call(_encode(method, params)));
   }
+
+  /// Like [callSync] but returns the unwrapped `result` payload.
+  dynamic callResult(String method, [Map<String, dynamic>? params]) =>
+      callSync(method, params)['result'];
 
   /// Makes an async RPC call; it runs in a Go goroutine and the result arrives via callback.
   Future<Map<String, dynamic>> callAsync(
@@ -95,26 +64,27 @@ class FlacCore {
     final completer = Completer<Map<String, dynamic>>();
     _pendingRPCs[requestId] = completer;
 
-    final request = jsonEncode({
-      'method': method,
-      if (params != null) 'params': params,
-    });
-
-    final requestPtr = request.toNativeUtf8().cast<Char>();
-    _ffi.flacCallAsync(requestPtr, requestId);
-    calloc.free(requestPtr);
+    _transport.callAsync(_encode(method, params), requestId);
 
     return completer.future;
   }
 
+  /// Like [callAsync] but returns the unwrapped `result` payload.
+  Future<dynamic> callResultAsync(
+    String method, [
+    Map<String, dynamic>? params,
+  ]) async => (await callAsync(method, params))['result'];
+
   void shutdown() {
     if (!_initialized) return;
-    _ffi.flacShutdown();
-    _nativeCallback.close();
+    _transport.shutdown();
     _eventController.close();
     _initialized = false;
-    _instance = null;
+    if (identical(_instance, this)) _instance = null;
   }
+
+  String _encode(String method, Map<String, dynamic>? params) =>
+      jsonEncode({'method': method, 'params': ?params});
 
   Map<String, dynamic> getConfig() => callSync('getConfig');
 
@@ -165,47 +135,38 @@ class FlacCore {
     }
   }
 
-  static void _onEvent(Pointer<Char> jsonPtr) {
-    final jsonStr = jsonPtr.cast<Utf8>().toDartString();
-    // Native memory is freed once copied: it uses the same allocator as C.CString (malloc).
-    FlacCore.instance._ffi.flacFree(jsonPtr);
-
+  void _onEvent(String jsonStr) {
     try {
       final event = jsonDecode(jsonStr) as Map<String, dynamic>;
-      final core = FlacCore.instance;
 
       if (event['type'] == 'rpc_response') {
         final requestId = event['requestId'] as int;
         final payload = event['payload'];
-        final completer = core._pendingRPCs.remove(requestId);
+        final completer = _pendingRPCs.remove(requestId);
         if (completer != null) {
           try {
             final parsed = (payload is String)
                 ? jsonDecode(payload) as Map<String, dynamic>
                 : payload as Map<String, dynamic>;
-            if (parsed.containsKey('error') && parsed['error'] != null) {
-              final err = parsed['error'] as Map<String, dynamic>;
-              completer.completeError(
-                FlacCoreException(
-                  code: err['code'] as String,
-                  message: err['message'] as String,
-                ),
-              );
-            } else {
-              completer.complete(parsed);
-            }
+            _throwIfError(parsed);
+            completer.complete(parsed);
           } catch (e) {
             completer.completeError(e);
           }
         }
       } else {
-        core._eventController.add(event);
+        _eventController.add(event);
       }
     } catch (_) {}
   }
 
   Map<String, dynamic> _parseResponse(String jsonStr) {
     final json = jsonDecode(jsonStr) as Map<String, dynamic>;
+    _throwIfError(json);
+    return json;
+  }
+
+  void _throwIfError(Map<String, dynamic> json) {
     if (json.containsKey('error') && json['error'] != null) {
       final err = json['error'] as Map<String, dynamic>;
       throw FlacCoreException(
@@ -213,6 +174,5 @@ class FlacCore {
         message: err['message'] as String,
       );
     }
-    return json;
   }
 }

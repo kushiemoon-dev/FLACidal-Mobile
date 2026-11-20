@@ -2,52 +2,52 @@ import 'dart:ffi';
 import 'dart:io';
 
 // Function signatures for native bindings (Char is used to match Go's *C.char)
-typedef _FlacInitNative = Pointer<Char> Function(Pointer<Char>);
-typedef _FlacInitDart = Pointer<Char> Function(Pointer<Char>);
+typedef FlacInitNative = Pointer<Char> Function(Pointer<Char>);
+typedef FlacInitDart = Pointer<Char> Function(Pointer<Char>);
 
-typedef _FlacCallNative = Pointer<Char> Function(Pointer<Char>);
-typedef _FlacCallDart = Pointer<Char> Function(Pointer<Char>);
+typedef FlacCallNative = Pointer<Char> Function(Pointer<Char>);
+typedef FlacCallDart = Pointer<Char> Function(Pointer<Char>);
 
-typedef _FlacCallAsyncNative = Void Function(Pointer<Char>, Int32);
-typedef _FlacCallAsyncDart = void Function(Pointer<Char>, int);
+typedef FlacCallAsyncNative = Void Function(Pointer<Char>, Int32);
+typedef FlacCallAsyncDart = void Function(Pointer<Char>, int);
 
-typedef _EventCallbackNative = Void Function(Pointer<Char>);
-typedef _FlacSetEventCallbackNative =
-    Void Function(Pointer<NativeFunction<_EventCallbackNative>>);
-typedef _FlacSetEventCallbackDart =
-    void Function(Pointer<NativeFunction<_EventCallbackNative>>);
+typedef EventCallbackNative = Void Function(Pointer<Char>);
+typedef FlacSetEventCallbackNative =
+    Void Function(Pointer<NativeFunction<EventCallbackNative>>);
+typedef FlacSetEventCallbackDart =
+    void Function(Pointer<NativeFunction<EventCallbackNative>>);
 
-typedef _FlacFreeNative = Void Function(Pointer<Char>);
-typedef _FlacFreeDart = void Function(Pointer<Char>);
+typedef FlacFreeNative = Void Function(Pointer<Char>);
+typedef FlacFreeDart = void Function(Pointer<Char>);
 
-typedef _FlacShutdownNative = Void Function();
-typedef _FlacShutdownDart = void Function();
+typedef FlacShutdownNative = Void Function();
+typedef FlacShutdownDart = void Function();
 
 class FlacFFI {
   late final DynamicLibrary _lib;
 
-  late final _FlacInitDart flacInit;
-  late final _FlacCallDart flacCall;
-  late final _FlacCallAsyncDart flacCallAsync;
-  late final _FlacSetEventCallbackDart flacSetEventCallback;
-  late final _FlacFreeDart flacFree;
-  late final _FlacShutdownDart flacShutdown;
+  late final FlacInitDart flacInit;
+  late final FlacCallDart flacCall;
+  late final FlacCallAsyncDart flacCallAsync;
+  late final FlacSetEventCallbackDart flacSetEventCallback;
+  late final FlacFreeDart flacFree;
+  late final FlacShutdownDart flacShutdown;
 
   FlacFFI() {
     _lib = _loadLibrary();
 
-    flacInit = _lib.lookupFunction<_FlacInitNative, _FlacInitDart>('FlacInit');
-    flacCall = _lib.lookupFunction<_FlacCallNative, _FlacCallDart>('FlacCall');
+    flacInit = _lib.lookupFunction<FlacInitNative, FlacInitDart>('FlacInit');
+    flacCall = _lib.lookupFunction<FlacCallNative, FlacCallDart>('FlacCall');
     flacCallAsync = _lib
-        .lookupFunction<_FlacCallAsyncNative, _FlacCallAsyncDart>(
+        .lookupFunction<FlacCallAsyncNative, FlacCallAsyncDart>(
           'FlacCallAsync',
         );
     flacSetEventCallback = _lib
-        .lookupFunction<_FlacSetEventCallbackNative, _FlacSetEventCallbackDart>(
+        .lookupFunction<FlacSetEventCallbackNative, FlacSetEventCallbackDart>(
           'FlacSetEventCallback',
         );
-    flacFree = _lib.lookupFunction<_FlacFreeNative, _FlacFreeDart>('FlacFree');
-    flacShutdown = _lib.lookupFunction<_FlacShutdownNative, _FlacShutdownDart>(
+    flacFree = _lib.lookupFunction<FlacFreeNative, FlacFreeDart>('FlacFree');
+    flacShutdown = _lib.lookupFunction<FlacShutdownNative, FlacShutdownDart>(
       'FlacShutdown',
     );
   }

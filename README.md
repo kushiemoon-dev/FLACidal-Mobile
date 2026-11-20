@@ -173,7 +173,7 @@ Contributions are welcome. Here's where extra hands would help most:
 
 ## Star History
 
-[![Star History](docs/star-history.svg)](https://github.com/kushiemoon-dev/flacidal-mobile/stargazers)
+[![Star History](https://raw.githubusercontent.com/kushiemoon-dev/FLACidal-Mobile/star-history/star-history.svg)](https://github.com/kushiemoon-dev/flacidal-mobile/stargazers)
 
 ---
 

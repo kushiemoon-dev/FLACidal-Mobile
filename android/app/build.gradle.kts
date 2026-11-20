@@ -1,9 +1,31 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Release signing comes from android/key.properties (storeFile, storePassword,
+// keyAlias, keyPassword) or from the ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD,
+// ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD environment variables. There is no
+// fallback to the debug key: a release build without them fails.
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun signingValue(prop: String, env: String): String? =
+    (keyProps.getProperty(prop) ?: System.getenv(env))?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingValue("storeFile", "ANDROID_KEYSTORE_PATH")
+val releaseStorePassword = signingValue("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "ANDROID_KEY_ALIAS")
+val releaseKeyPassword = signingValue("keyPassword", "ANDROID_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword
+).all { it != null }
 
 android {
     namespace = "dev.kushiemoon.flacidal_mobile"
@@ -30,14 +52,53 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }
+
+gradle.taskGraph.whenReady {
+    val releaseRequested = allTasks.any { it.name == "assembleRelease" || it.name == "bundleRelease" }
+    if (releaseRequested && !hasReleaseSigning) {
+        throw GradleException(
+            "Release signing is not configured: provide android/key.properties or the ANDROID_KEYSTORE_* variables"
+        )
+    }
+}
+
+// libflacidal.so is not tracked by git. Build it with tool/build_core.sh.
+// Use -Pflacidal.abis=arm64-v8a to require only the ABIs you actually target.
+val coreAbis = (findProperty("flacidal.abis") as String?)?.split(",")?.map { it.trim() }
+    ?: listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+
+val verifyCoreLibs = tasks.register("verifyCoreLibs") {
+    doLast {
+        coreAbis.forEach { abi ->
+            if (!file("src/main/jniLibs/$abi/libflacidal.so").exists()) {
+                throw GradleException(
+                    "libflacidal.so missing for $abi. Run tool/build_core.sh <core checkout> (see README)"
+                )
+            }
+        }
+    }
+}
+
+tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(verifyCoreLibs) }
 
 flutter {
     source = "../.."

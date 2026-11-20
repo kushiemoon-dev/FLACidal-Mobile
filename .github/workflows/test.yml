@@ -23,12 +23,13 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: |
-          dart analyze lib/ 2>&1 | tee /tmp/analyze.txt
-          if grep -q " error " /tmp/analyze.txt; then
-            echo "Errors found!"
-            exit 1
-          fi
+        run: flutter analyze --fatal-infos --fatal-warnings
 
       - name: Test
-        run: flutter test || echo "No tests found, skipping"
+        run: flutter test --coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info

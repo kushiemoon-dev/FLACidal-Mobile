@@ -16,8 +16,6 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    env:
-      CORE_REF: v0.21.1
     steps:
       - name: Checkout flacidal-mobile
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -25,22 +23,25 @@ jobs:
           path: flacidal-mobile
           fetch-depth: 0
 
+      # CORE_VERSION is the single source of the pinned Core tag.
+      - name: Read pinned Core version
+        id: core
+        run: |
+          MIN_CORE=v0.31.0
+          REF=$(tr -d '[:space:]' < flacidal-mobile/CORE_VERSION)
+          if [ "$(printf '%s\n%s\n' "$MIN_CORE" "$REF" | sort -V | head -1)" != "$MIN_CORE" ]; then
+            echo "::error::CORE_VERSION ($REF) is older than the minimum supported Core ($MIN_CORE)"
+            exit 1
+          fi
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+
       - name: Checkout flacidal-core
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: kushiemoon-dev/flacidal-core
-          ref: ${{ env.CORE_REF }}
+          ref: ${{ steps.core.outputs.ref }}
           path: flacidal-core
           token: ${{ secrets.CORE_ACCESS_TOKEN }}
-
-      - name: Verify Core ref is the latest tag
-        run: |
-          LATEST=$(git ls-remote --tags "https://x-access-token:${{ secrets.CORE_ACCESS_TOKEN }}@github.com/kushiemoon-dev/flacidal-core.git" \
-            | grep -o 'refs/tags/v[0-9.]*$' | sed 's#refs/tags/##' | sort -V | tail -1)
-          if [ "$LATEST" != "$CORE_REF" ]; then
-            echo "::error::flacidal-core pinned ref ($CORE_REF) is not the latest tag ($LATEST)"
-            exit 1
-          fi
 
       - name: Get version from tag
         id: version
@@ -64,20 +65,18 @@ jobs:
             exit 1
           fi
 
-      # The app is intentionally signed with the debug key (android/app/build.gradle.kts),
-      # not a real release key -- this repo distributes betas via GitHub Releases, not the
-      # Play Store. Without this, every CI run generates a fresh throwaway debug.keystore,
-      # so each release's signature differs from the last and Android refuses to install
-      # an update over the previous one (INSTALL_FAILED_UPDATE_INCOMPATIBLE).
-      - name: Restore persistent debug keystore
+      # The keystore stays in RUNNER_TEMP, never in the workspace, and no secret is echoed.
+      - name: Restore release keystore
+        env:
+          ANDROID_RELEASE_KEYSTORE: ${{ secrets.ANDROID_RELEASE_KEYSTORE }}
         run: |
-          mkdir -p ~/.android
-          echo "${{ secrets.ANDROID_DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
+          printf '%s' "$ANDROID_RELEASE_KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       - name: Setup Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version: '1.26'
+          go-version-file: flacidal-core/go.mod
 
       - name: Setup Android NDK
         run: |
@@ -118,10 +117,18 @@ jobs:
 
       - name: Build release APK (universal)
         working-directory: flacidal-mobile
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: flutter build apk --release
 
       - name: Build per-ABI APKs
         working-directory: flacidal-mobile
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: flutter build apk --release --split-per-abi
 
       - name: Rename artifacts
@@ -131,6 +138,18 @@ jobs:
           mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk FLACidal-${{ steps.version.outputs.tag }}-arm64.apk
           mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk FLACidal-${{ steps.version.outputs.tag }}-arm.apk
           mv build/app/outputs/flutter-apk/app-x86_64-release.apk FLACidal-${{ steps.version.outputs.tag }}-x86_64.apk
+
+      - name: Verify APKs are not debug signed
+        working-directory: flacidal-mobile
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          for apk in FLACidal-*.apk; do
+            CERTS=$("$APKSIGNER" verify --print-certs "$apk")
+            if echo "$CERTS" | grep -q "Android Debug"; then
+              echo "::error::$apk is signed with the Android debug certificate"
+              exit 1
+            fi
+          done
 
       - name: Generate checksums
         working-directory: flacidal-mobile

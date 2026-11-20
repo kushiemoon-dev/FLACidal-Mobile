@@ -63,3 +63,13 @@ docs/superpowers/
 .agents/
 .claude/
 .superpowers/
+
+# Core native libraries are built from the tag in CORE_VERSION (tool/build_core.sh)
+android/app/src/main/jniLibs/*/libflacidal.so
+ios/Runner/libflacidal.a
+ios/Runner/libflacidal.h
+
+# Release signing material
+android/key.properties
+*.jks
+*.keystore
